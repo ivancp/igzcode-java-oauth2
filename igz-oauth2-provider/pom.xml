@@ -1,0 +1,59 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	
+	<groupId>com.igzcode.java</groupId>
+	<artifactId>igzcode-oauth2-provider</artifactId>
+	<version>1.0.2</version>
+	<packaging>jar</packaging>
+
+	<name>IGZ OAuth2 Provider</name>
+	
+	<properties>
+		<amber.version>0.31-incubating-SNAPSHOT</amber.version>
+	</properties>
+	
+	<dependencies>
+		<dependency>
+			<groupId>org.apache.amber</groupId>
+			<artifactId>amber-oauth2-authzserver</artifactId>
+			<version>${amber.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.amber</groupId>
+			<artifactId>amber-oauth2-resourceserver</artifactId>
+			<version>${amber.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.amber</groupId>
+			<artifactId>amber-oauth2-common</artifactId>
+			<version>${amber.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>javax.servlet</groupId>
+			<artifactId>servlet-api</artifactId>
+			<version>2.5</version>
+			<scope>provided</scope>
+		</dependency>
+	</dependencies>
+	
+	<repositories>
+		<repository>
+			<id>Apache Snapshots</id>
+			<url>http://repository.apache.org/snapshots</url>
+		</repository>
+	</repositories>
+	
+	<distributionManagement>
+		<repository>
+			<id>igzcode</id>
+			<name>Repositorio de IGZcode</name>
+			<url>http://nexus.igzcode.com/content/repositories/releases/</url>
+		</repository>
+		<snapshotRepository>
+			<id>igzcode-snapshot</id>
+			<name>Repositorio de IGZcode Snapshot Repository</name>
+			<url>http://nexus.igzcode.com/content/repositories/snapshots/</url>
+		</snapshotRepository>
+	</distributionManagement>
+</project>

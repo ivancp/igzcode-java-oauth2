@@ -1,10 +1,4 @@
-igzcode-java-oauth2
-===================
-
-IGZCode OpenSource Java library for simplify OAuth2 communication
-
-
-Este proyecto está dividido en 4 subproyectos:
+﻿Este proyecto está dividido en 4 subproyectos:
 
 - igz-oauth2-provider -> destinado a generar JAR para instalar en el provedor de servicios OAuth
 - igz-oauth2-consumer -> destinado a generar JAR para instalar en el consumidor de servicios OAuth

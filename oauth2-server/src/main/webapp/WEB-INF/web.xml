@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<web-app xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns="http://java.sun.com/xml/ns/javaee" xmlns:web="http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd"
+	xsi:schemaLocation="http://java.sun.com/xml/ns/javaee
+		http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd"
+	version="2.5">
+
+	<servlet>
+		<servlet-name>Token Endpoint</servlet-name>
+		<servlet-class>com.igz.oauth2.provider.endpoint.TokenEndpoint</servlet-class>
+	</servlet>
+	<servlet-mapping>
+		<servlet-name>Token Endpoint</servlet-name>
+		<url-pattern>/token</url-pattern>
+	</servlet-mapping>
+
+	<servlet>
+		<servlet-name>Refresh Token Endpoint</servlet-name>
+		<servlet-class>com.igz.oauth2.provider.endpoint.RefreshTokenEndpoint</servlet-class>
+	</servlet>
+	<servlet-mapping>
+		<servlet-name>Refresh Token Endpoint</servlet-name>
+		<url-pattern>/refresh-token</url-pattern>
+	</servlet-mapping>
+
+	<servlet>
+		<servlet-name>Get Resource</servlet-name>
+		<servlet-class>com.igz.oauth2.res.GetProtectedResource</servlet-class>
+	</servlet>
+	<servlet-mapping>
+		<servlet-name>Get Resource</servlet-name>
+		<url-pattern>/getresource</url-pattern>
+	</servlet-mapping>
+	
+	<servlet>
+		<servlet-name>Post Resource</servlet-name>
+		<servlet-class>com.igz.oauth2.res.PostProtectedResource</servlet-class>
+	</servlet>
+	<servlet-mapping>
+		<servlet-name>Post Resource</servlet-name>
+		<url-pattern>/postresource</url-pattern>
+	</servlet-mapping>
+
+	<filter>
+		<filter-name>AuthFilter</filter-name>
+		<filter-class>com.igz.oauth2.provider.filter.OAuthFilter</filter-class>
+	</filter>
+	<filter-mapping>
+		<filter-name>AuthFilter</filter-name>
+		<url-pattern>/getresource</url-pattern>
+	</filter-mapping>
+	<filter-mapping>
+		<filter-name>AuthFilter</filter-name>
+		<url-pattern>/postresource</url-pattern>
+	</filter-mapping>
+
+
+	<welcome-file-list>
+		<welcome-file>index.jsp</welcome-file>
+		<welcome-file>index.html</welcome-file>
+	</welcome-file-list>
+
+</web-app>

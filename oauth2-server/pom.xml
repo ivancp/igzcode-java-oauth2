@@ -1,0 +1,45 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<parent>
+		<groupId>com.igz</groupId>
+		<artifactId>oauth2-parent</artifactId>
+		<version>0.0.1-SNAPSHOT</version>
+	</parent>
+	<artifactId>oauth2-server</artifactId>
+	<packaging>war</packaging>
+
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.mortbay.jetty</groupId>
+				<artifactId>maven-jetty-plugin</artifactId>
+				<version>6.1.26</version>
+				<configuration>
+					<scanIntervalSeconds>5</scanIntervalSeconds>
+					<contextPath>/</contextPath>
+					<connectors>
+						<connector implementation="org.mortbay.jetty.bio.SocketConnector">
+							<port>8080</port>
+						</connector>
+						<connector implementation="org.mortbay.jetty.security.SslSocketConnector">
+							<port>8443</port>
+							<maxIdleTime>60000</maxIdleTime>
+							<keystore>ssl/keystore.jks</keystore>
+							<password>abbyl40L</password>
+							<keyPassword>abbyl40L</keyPassword>
+						</connector>
+					</connectors>
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
+
+	<dependencies>
+		<dependency>
+			<groupId>com.igzcode.java</groupId>
+			<artifactId>igzcode-oauth2-provider</artifactId>
+			<version>1.0.2</version>
+		</dependency>
+	</dependencies>
+</project>
