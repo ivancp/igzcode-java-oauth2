@@ -1,4 +1,4 @@
 igzcode-java-oauth2
 ===================
 
-IGZCode OpenSource Java library for simplify OAuth2 coomunication
+IGZCode OpenSource Java library for simplify OAuth2 communication
