@@ -53,6 +53,8 @@ public class TokenServlet extends HttpServlet {
 			request.getSession().setAttribute(OAuth.OAUTH_BEARER_TOKEN, accessToken);
 			request.getSession().setAttribute(OAuth.OAUTH_EXPIRES_IN, expiresIn);
 
+			IgzOAuthClient.setAccessToken( accessToken );
+			
 			response.sendRedirect( IgzOAuthClient.getLoginEndPoint() );
 
 		} catch (OAuthProblemException e) {

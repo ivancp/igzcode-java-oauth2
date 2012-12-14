@@ -70,6 +70,9 @@ public class IgzOAuthClient {
 	    loginEndPoint =  PropertiesUtil.getString( LOGIN_ENDPOINT );
 	}
 
+	public static void setAccessToken( String p_accessToken ){
+		accesToken = p_accessToken;
+	}
 	
 	public static String getApplicationId(){
 		return applicationId;
