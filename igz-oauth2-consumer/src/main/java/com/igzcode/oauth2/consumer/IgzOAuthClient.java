@@ -127,6 +127,10 @@ public class IgzOAuthClient {
 	public HttpURLConnection doPost ( String p_url, String rawParams, int timeout, String type, HttpServletRequest req ) throws IOException, OAuthSystemException, OAuthProblemException {
 	    return doCall( req, p_url, OAuth.HttpMethod.POST, null, timeout, rawParams, type );
 	}
+	
+	public HttpURLConnection doPost ( String p_url, String rawParams, String type, HttpServletRequest req ) throws IOException, OAuthSystemException, OAuthProblemException {
+	    return doCall( req, p_url, OAuth.HttpMethod.POST, null, null, rawParams, type );
+	}
 
 	public HttpURLConnection doPut ( String p_url, Map<String, String> p_params, HttpServletRequest req ) throws IOException, OAuthSystemException, OAuthProblemException {
 		return doCall( req, p_url, OAuth.HttpMethod.PUT, p_params, null, null, null );
