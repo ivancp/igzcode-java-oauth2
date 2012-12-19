@@ -179,6 +179,10 @@ public class IgzOAuthClient {
 			conn.setRequestMethod( method );
 			conn.setRequestProperty(OAuth.HeaderType.CONTENT_TYPE, OAuth.ContentType.URL_ENCODED + ";charset="+ENCODING);
 			conn.setRequestProperty("Accept-Charset", ENCODING);
+			
+			if ( type != null ) {
+                conn.setRequestProperty("Content-Type", type);
+            }
 
 			if ( timeout != null && timeout > 0 ) {
 				logger.info("SET CONNECTION TIMEOUT: " + timeout);
@@ -195,10 +199,6 @@ public class IgzOAuthClient {
 				output.write( (rawParams != null) ? rawParams.getBytes() : getPayload(params) );
 				output.flush();
 				output.close();
-			}
-			
-			if ( type != null ) {
-			    conn.setRequestProperty("Content-Type", type);
 			}
 			
 			logger.info("GET RESPONSE EXPIRATION[" + conn.getExpiration() +"] READ TIMEOUT[" + conn.getReadTimeout() + "]" );
