@@ -24,7 +24,7 @@ public class AuthServlet extends HttpServlet {
 
     public void init(ServletConfig config) throws ServletException {
         
-        String properties = getInitParameter("oauth2properties");
+        String properties = config.getInitParameter("oauth2properties");
         if ( properties == null ) {
             properties = "oauth2.properties";
         }

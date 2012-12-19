@@ -199,8 +199,11 @@ public class IgzOAuthClient {
 			if ( conn.getResponseCode() == HttpServletResponse.SC_UNAUTHORIZED ) {
 				logger.info("UNAUTHORIZED CLIENT");
 
-				accessToken = null;
-				getNewAccesToken(req);
+				req.getSession().setAttribute(OAuth.OAUTH_BEARER_TOKEN, null);
+	            req.getSession().setAttribute(OAuth.OAUTH_EXPIRES_IN, null);
+	            
+				getNewAccesToken(req); // TODO grant type code not implemented!
+				
 				return doCall( req, url, method, params, timeout );
 
 			} else {
