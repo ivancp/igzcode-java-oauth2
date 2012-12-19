@@ -29,7 +29,7 @@ public class TokenServlet extends HttpServlet {
 
     public void init(ServletConfig config) throws ServletException {
         
-        String properties = getInitParameter("oauth2properties");
+        String properties = config.getInitParameter("oauth2properties");
         if ( properties == null ) {
             properties = "oauth2.properties";
         }
@@ -54,8 +54,13 @@ public class TokenServlet extends HttpServlet {
 
             String accessToken = oAuthResponse.getAccessToken();
             
-            Date expiresIn = new Date();
-            expiresIn.setTime( expiresIn.getTime() + (oAuthResponse.getExpiresIn() * 1000) );
+            Date expiresIn = null;
+            Long expiresL = oAuthResponse.getExpiresIn();
+
+            if (expiresL != null) {
+                expiresIn = new Date();
+                expiresIn.setTime(expiresIn.getTime() + (oAuthResponse.getExpiresIn() * 1000));
+            }
 
             request.getSession().setAttribute(OAuth.OAUTH_BEARER_TOKEN, accessToken);
             request.getSession().setAttribute(OAuth.OAUTH_EXPIRES_IN, expiresIn);
