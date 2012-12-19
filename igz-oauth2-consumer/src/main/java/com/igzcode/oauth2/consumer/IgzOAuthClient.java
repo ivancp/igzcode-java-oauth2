@@ -11,6 +11,7 @@ import java.util.Date;
 import java.util.Map;
 import java.util.logging.Logger;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.apache.amber.oauth2.client.OAuthClient;
@@ -42,126 +43,136 @@ public class IgzOAuthClient {
 
 	private static final String ENCODING = "UTF-8";
 
-	private static String accesToken = null;
-	private static Date expiresIn = null;
-
-	private static String grantType;
-	private static String applicationId;
-	private static String applicationSecret;
-	private static String redirectUrl;
-	private static String tokenLocation;
-	private static String authLocation;
+	private String grantType;
+	private String applicationId;
+	private String applicationSecret;
+	private String redirectUrl;
+	private String tokenLocation;
+	private String authLocation;
 	
-	private static String authServletPath;
-	private static String loginEndPoint;
+	private String authServletPath;
+	private String loginEndPoint;
 
-	private static int accessTokenTries = 0;
+	private int accessTokenTries = 0;
 
-	private IgzOAuthClient() {}
-	
-	static {
-	    applicationId = PropertiesUtil.getString( APP_ID );
-	    grantType = PropertiesUtil.getString( GRANT_TYPE );
-	    authLocation = PropertiesUtil.getString( AUTH_LOCATION );
-	    tokenLocation = PropertiesUtil.getString( TOKEN_LOCATION );
-	    applicationSecret = PropertiesUtil.getString( APP_SECRET );
-	    redirectUrl = PropertiesUtil.getString( REDIRECT_URI );
-	    authServletPath = PropertiesUtil.getString( AUTH_SERVLET_PATH );
-	    loginEndPoint =  PropertiesUtil.getString( LOGIN_ENDPOINT );
+	public IgzOAuthClient (String p_filePath) {
+	    PropertiesUtil propertiesUtil = new PropertiesUtil(p_filePath);
+	    
+	    applicationId = propertiesUtil.getString( APP_ID );
+	    grantType = propertiesUtil.getString( GRANT_TYPE );
+	    authLocation = propertiesUtil.getString( AUTH_LOCATION );
+	    tokenLocation = propertiesUtil.getString( TOKEN_LOCATION );
+	    applicationSecret = propertiesUtil.getString( APP_SECRET );
+	    redirectUrl = propertiesUtil.getString( REDIRECT_URI );
+	    authServletPath = propertiesUtil.getString( AUTH_SERVLET_PATH );
+	    loginEndPoint =  propertiesUtil.getString( LOGIN_ENDPOINT );
 	}
 
-	public static void setAccessToken( String p_accessToken ){
-		accesToken = p_accessToken;
+	public Date getExpiresIn(HttpServletRequest p_request) {
+	    return (Date) p_request.getSession().getAttribute(OAuth.OAUTH_EXPIRES_IN);
 	}
 	
-	public static String getApplicationId(){
+	public String getAccessToken(HttpServletRequest p_request) {
+	    return (String) p_request.getSession().getAttribute(OAuth.OAUTH_BEARER_TOKEN);
+	    
+	}
+	
+	public String getApplicationId(){
 		return applicationId;
 	}
 
-	public static String getLoginEndPoint(){
+	public String getLoginEndPoint(){
 		return loginEndPoint;
 	}
 
-	public static String getGrantType(){
+	public String getGrantType(){
 		return grantType;
 	}
 
-	public static String getAuthServletPath(){
+	public String getAuthServletPath(){
 		return authServletPath;
 	}
 
-	public static String getAuthLocation(){
+	public String getAuthLocation(){
 		return authLocation;
 	}
 
-	public static String getTokenLocation(){
+	public String getTokenLocation(){
 		return tokenLocation;
 	}
 
-	public static String getApplicationSecret(){
+	public String getApplicationSecret(){
 		return applicationSecret;
 	}
 
-	public static String getRedirectUrl(){
+	public String getRedirectUrl(){
 		return redirectUrl;
 	}
 
-	public static HttpURLConnection doGet ( String p_url ) throws IOException, OAuthSystemException, OAuthProblemException {
-		return doCall( p_url, OAuth.HttpMethod.GET, null, null );
+	public HttpURLConnection doGet ( String p_url, HttpServletRequest req ) throws IOException, OAuthSystemException, OAuthProblemException {
+		return doCall( req, p_url, OAuth.HttpMethod.GET, null, null );
 	}
 
-	public static HttpURLConnection doGet ( String p_url, int timeout ) throws IOException, OAuthSystemException, OAuthProblemException {
-		return doCall( p_url, OAuth.HttpMethod.GET, null, timeout );
+	public HttpURLConnection doGet ( String p_url, int timeout, HttpServletRequest req ) throws IOException, OAuthSystemException, OAuthProblemException {
+		return doCall( req, p_url, OAuth.HttpMethod.GET, null, timeout );
 	}
 
-	public static HttpURLConnection doPost ( String p_url, Map<String, String> p_params ) throws IOException, OAuthSystemException, OAuthProblemException {
-		return doCall( p_url, OAuth.HttpMethod.POST, p_params, null );
+	public HttpURLConnection doPost ( String p_url, Map<String, String> p_params, HttpServletRequest req ) throws IOException, OAuthSystemException, OAuthProblemException {
+		return doCall( req, p_url, OAuth.HttpMethod.POST, p_params, null );
 	}
-	public static HttpURLConnection doPost ( String p_url, Map<String, String> p_params, int timeout ) throws IOException, OAuthSystemException, OAuthProblemException {
-		return doCall( p_url, OAuth.HttpMethod.POST, p_params, timeout );
-	}
-
-	public static HttpURLConnection doPut ( String p_url, Map<String, String> p_params ) throws IOException, OAuthSystemException, OAuthProblemException {
-		return doCall( p_url, OAuth.HttpMethod.PUT, p_params, null );
+	public HttpURLConnection doPost ( String p_url, Map<String, String> p_params, int timeout, HttpServletRequest req ) throws IOException, OAuthSystemException, OAuthProblemException {
+		return doCall( req, p_url, OAuth.HttpMethod.POST, p_params, timeout );
 	}
 
-	public static HttpURLConnection doPut ( String p_url, Map<String, String> p_params, int timeout ) throws IOException, OAuthSystemException, OAuthProblemException {
-		return doCall( p_url, OAuth.HttpMethod.PUT, p_params, timeout );
+	// TODO
+//	public HttpURLConnection doPost ( String p_url, String rawParams, int timeout, String type, HttpServletRequest req ) throws IOException, OAuthSystemException, OAuthProblemException {
+//	    return doCall( req, p_url, OAuth.HttpMethod.POST, null, rawParams, timeout );
+//	}
+
+	public HttpURLConnection doPut ( String p_url, Map<String, String> p_params, HttpServletRequest req ) throws IOException, OAuthSystemException, OAuthProblemException {
+		return doCall( req, p_url, OAuth.HttpMethod.PUT, p_params, null );
 	}
 
-	public static HttpURLConnection doDelete ( String p_url ) throws IOException, OAuthSystemException, OAuthProblemException {
-		return doCall( p_url, OAuth.HttpMethod.DELETE, null, null );
-	}
-	public static HttpURLConnection doDelete ( String p_url, int timeout ) throws IOException, OAuthSystemException, OAuthProblemException {
-		return doCall( p_url, OAuth.HttpMethod.DELETE, null, timeout );
+	public HttpURLConnection doPut ( String p_url, Map<String, String> p_params, int timeout, HttpServletRequest req ) throws IOException, OAuthSystemException, OAuthProblemException {
+		return doCall( req, p_url, OAuth.HttpMethod.PUT, p_params, timeout );
 	}
 
-	private static HttpURLConnection doCall ( String url, String method, Map<String, String> params, Integer timeout ) throws IOException, OAuthSystemException, OAuthProblemException {
+	public HttpURLConnection doDelete ( String p_url, HttpServletRequest req ) throws IOException, OAuthSystemException, OAuthProblemException {
+		return doCall( req, p_url, OAuth.HttpMethod.DELETE, null, null );
+	}
+	public HttpURLConnection doDelete ( String p_url, int timeout, HttpServletRequest req ) throws IOException, OAuthSystemException, OAuthProblemException {
+		return doCall( req, p_url, OAuth.HttpMethod.DELETE, null, timeout );
+	}
 
+	private HttpURLConnection doCall ( HttpServletRequest req, String url, String method, Map<String, String> params, Integer timeout ) throws IOException, OAuthSystemException, OAuthProblemException {
+
+	    Date expiresIn = getExpiresIn(req);
+	    String accessToken = getAccessToken(req);
+	    
 		// Check if access token is null or has been expired
-		if ( accesToken == null || ( expiresIn != null && new Date().getTime() >= expiresIn.getTime() ) ) {
-		    logger.info("ACCESS TOKEN NULL OR EXPIRED accesToken[" + accesToken + "]");
+		if ( accessToken == null || ( expiresIn != null && new Date().getTime() >= expiresIn.getTime() ) ) {
+		    logger.info("ACCESS TOKEN NULL OR EXPIRED accesToken[" + accessToken + "]");
 		    
-			accesToken = null;
+			accessToken = null;
 			
 			if( GrantType.CLIENT_CREDENTIALS.toString().equals( getGrantType() )) {
-				getNewAccesToken();
+				getNewAccesToken(req);
 				
-				return doCall( url, method, params, timeout );
+				return doCall( req, url, method, params, timeout );
 			} else if(  GrantType.AUTHORIZATION_CODE.toString().equals( getGrantType() ) ) {
 				 throw OAuthProblemException.error(OAuthError.TokenResponse.UNAUTHORIZED_CLIENT).description( OAuthError.TokenResponse.UNAUTHORIZED_CLIENT );
 			} else {
-				getNewAccesToken();
+				getNewAccesToken(req);
 				
-				return doCall( url, method, params, timeout );
+				return doCall( req, url, method, params, timeout );
 			}
 
 		} else {
-			logger.info("TRY CALL accesToken[" + accesToken + "] url[" + url + "] method[" + method + "]");
+			logger.info("TRY CALL accesToken[" + accessToken + "] url[" + url + "] method[" + method + "]");
 
 			HttpURLConnection conn = (HttpURLConnection) new URL(url).openConnection();
 
-			conn.setRequestProperty(OAuth.HeaderType.AUTHORIZATION, OAuth.OAUTH_HEADER_NAME + " " + accesToken );
+			conn.setRequestProperty(OAuth.HeaderType.AUTHORIZATION, OAuth.OAUTH_HEADER_NAME + " " + accessToken );
 			conn.setRequestMethod( method );
 			conn.setRequestProperty(OAuth.HeaderType.CONTENT_TYPE, OAuth.ContentType.URL_ENCODED + ";charset="+ENCODING);
 			conn.setRequestProperty("Accept-Charset", ENCODING);
@@ -188,9 +199,9 @@ public class IgzOAuthClient {
 			if ( conn.getResponseCode() == HttpServletResponse.SC_UNAUTHORIZED ) {
 				logger.info("UNAUTHORIZED CLIENT");
 
-				accesToken = null;
-				getNewAccesToken();
-				return doCall( url, method, params, timeout );
+				accessToken = null;
+				getNewAccesToken(req);
+				return doCall( req, url, method, params, timeout );
 
 			} else {
 				logger.info("RESPONSE OK ");
@@ -201,10 +212,12 @@ public class IgzOAuthClient {
 		}
 	}
 
-	private synchronized static void getNewAccesToken() throws OAuthSystemException, OAuthProblemException {
+	private synchronized void getNewAccesToken(HttpServletRequest req) throws OAuthSystemException, OAuthProblemException {
+	    
+	    String accessToken = getAccessToken(req);
 	    
 	    // Due to synchronized method, we must check if an call has assigned access token value before
-	    if ( accesToken != null ) {
+	    if ( accessToken != null ) {
 	        return;
 	    }
 	    
@@ -229,18 +242,21 @@ public class IgzOAuthClient {
 			OAuthClient oAuthClient = new OAuthClient(new URLConnectionClient());
 			OAuthAccessTokenResponse oAuthResponse = oAuthClient.accessToken(request);
 
-			accesToken = oAuthResponse.getAccessToken();
+			accessToken = oAuthResponse.getAccessToken();
 
-			expiresIn = new Date();
+			Date expiresIn = new Date();
 			expiresIn.setTime( expiresIn.getTime() + (oAuthResponse.getExpiresIn() * 1000) );
+			
+			req.getSession().setAttribute(OAuth.OAUTH_BEARER_TOKEN, accessToken);
+			req.getSession().setAttribute(OAuth.OAUTH_EXPIRES_IN, expiresIn);
 
-			logger.info("NEW TOKEN[" + accesToken + "] EXPIRES IN[" + expiresIn + "]");
+			logger.info("NEW TOKEN[" + accessToken + "] EXPIRES IN[" + expiresIn + "]");
 			
 		}
 	}
 
 
-	private static byte[] getPayload (Map<String, String> params) throws UnsupportedEncodingException {
+	private byte[] getPayload (Map<String, String> params) throws UnsupportedEncodingException {
 		StringBuilder sbPayload = new StringBuilder("");
 		
 		for ( String key : params.keySet() ) {

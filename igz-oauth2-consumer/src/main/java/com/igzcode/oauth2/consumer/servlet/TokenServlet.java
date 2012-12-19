@@ -1,8 +1,9 @@
 package com.igzcode.oauth2.consumer.servlet;
 
-
 import java.io.IOException;
+import java.util.Date;
 
+import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -20,50 +21,52 @@ import org.apache.amber.oauth2.common.message.types.GrantType;
 
 import com.igzcode.oauth2.consumer.IgzOAuthClient;
 
-
 public class TokenServlet extends HttpServlet {
 
-	private static final long serialVersionUID = 252800141251573580L;
+    private static final long serialVersionUID = 252800141251573580L;
+    
+    private IgzOAuthClient igzOAuthClient;
 
-	@Override
-	protected void doGet(HttpServletRequest request,
-			HttpServletResponse response) throws ServletException, IOException {
+    public void init(ServletConfig config) throws ServletException {
+        
+        String properties = getInitParameter("oauth2properties");
+        if ( properties == null ) {
+            properties = "oauth2.properties";
+        }
+        
+        igzOAuthClient = new IgzOAuthClient(properties);
+    }
 
-		try {
-			System.out.println( "TokenServlet" );
-			
-			OAuthAuthzResponse oar = OAuthAuthzResponse.oauthCodeAuthzResponse(request);
-			String code = oar.getCode();
+    @Override
+    protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 
-			OAuthClientRequest oautReq = OAuthClientRequest
-					.tokenLocation(IgzOAuthClient.getTokenLocation())
-					.setGrantType(GrantType.AUTHORIZATION_CODE)
-					.setClientId(IgzOAuthClient.getApplicationId())
-					.setClientSecret(IgzOAuthClient.getApplicationSecret())
-					.setRedirectURI(IgzOAuthClient.getRedirectUrl())
-					.setCode(code)
-					.buildBodyMessage();
+        try {
+            OAuthAuthzResponse oar = OAuthAuthzResponse.oauthCodeAuthzResponse(request);
+            String code = oar.getCode();
 
-			OAuthClient oAuthClient = new OAuthClient(new URLConnectionClient());
-			OAuthAccessTokenResponse oAuthResponse = oAuthClient.accessToken(oautReq);
+            OAuthClientRequest oautReq = OAuthClientRequest.tokenLocation(igzOAuthClient.getTokenLocation())
+                    .setGrantType(GrantType.AUTHORIZATION_CODE).setClientId(igzOAuthClient.getApplicationId())
+                    .setClientSecret(igzOAuthClient.getApplicationSecret()).setRedirectURI(igzOAuthClient.getRedirectUrl()).setCode(code)
+                    .buildBodyMessage();
 
-			String accessToken = oAuthResponse.getAccessToken();
-			Long expiresIn = oAuthResponse.getExpiresIn();
+            OAuthClient oAuthClient = new OAuthClient(new URLConnectionClient());
+            OAuthAccessTokenResponse oAuthResponse = oAuthClient.accessToken(oautReq);
 
-			request.getSession().setAttribute(OAuth.OAUTH_BEARER_TOKEN, accessToken);
-			request.getSession().setAttribute(OAuth.OAUTH_EXPIRES_IN, expiresIn);
+            String accessToken = oAuthResponse.getAccessToken();
+            
+            Date expiresIn = new Date();
+            expiresIn.setTime( expiresIn.getTime() + (oAuthResponse.getExpiresIn() * 1000) );
 
-			IgzOAuthClient.setAccessToken( accessToken );
-			
-			response.sendRedirect( IgzOAuthClient.getLoginEndPoint() );
+            request.getSession().setAttribute(OAuth.OAUTH_BEARER_TOKEN, accessToken);
+            request.getSession().setAttribute(OAuth.OAUTH_EXPIRES_IN, expiresIn);
 
-		} catch (OAuthProblemException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (OAuthSystemException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+            response.sendRedirect(igzOAuthClient.getLoginEndPoint());
 
-	}
+        } catch (OAuthProblemException e) {
+            e.printStackTrace();
+        } catch (OAuthSystemException e) {
+            e.printStackTrace();
+        }
+
+    }
 }
