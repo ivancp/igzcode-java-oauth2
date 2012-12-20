@@ -110,41 +110,44 @@ public class IgzOAuthClient {
 	}
 
 	public HttpURLConnection doGet ( String p_url, HttpServletRequest req ) throws IOException, OAuthSystemException, OAuthProblemException {
-		return doCall( req, p_url, OAuth.HttpMethod.GET, null, null );
+		return doCall( req, p_url, OAuth.HttpMethod.GET, null, null, null, null );
 	}
 
 	public HttpURLConnection doGet ( String p_url, int timeout, HttpServletRequest req ) throws IOException, OAuthSystemException, OAuthProblemException {
-		return doCall( req, p_url, OAuth.HttpMethod.GET, null, timeout );
+		return doCall( req, p_url, OAuth.HttpMethod.GET, null, timeout, null, null );
 	}
 
 	public HttpURLConnection doPost ( String p_url, Map<String, String> p_params, HttpServletRequest req ) throws IOException, OAuthSystemException, OAuthProblemException {
-		return doCall( req, p_url, OAuth.HttpMethod.POST, p_params, null );
+		return doCall( req, p_url, OAuth.HttpMethod.POST, p_params, null, null, null );
 	}
 	public HttpURLConnection doPost ( String p_url, Map<String, String> p_params, int timeout, HttpServletRequest req ) throws IOException, OAuthSystemException, OAuthProblemException {
-		return doCall( req, p_url, OAuth.HttpMethod.POST, p_params, timeout );
+		return doCall( req, p_url, OAuth.HttpMethod.POST, p_params, timeout, null, null );
 	}
 
-	// TODO
-//	public HttpURLConnection doPost ( String p_url, String rawParams, int timeout, String type, HttpServletRequest req ) throws IOException, OAuthSystemException, OAuthProblemException {
-//	    return doCall( req, p_url, OAuth.HttpMethod.POST, null, rawParams, timeout );
-//	}
+	public HttpURLConnection doPost ( String p_url, String rawParams, int timeout, String type, HttpServletRequest req ) throws IOException, OAuthSystemException, OAuthProblemException {
+	    return doCall( req, p_url, OAuth.HttpMethod.POST, null, timeout, rawParams, type );
+	}
+	
+	public HttpURLConnection doPost ( String p_url, String rawParams, String type, HttpServletRequest req ) throws IOException, OAuthSystemException, OAuthProblemException {
+	    return doCall( req, p_url, OAuth.HttpMethod.POST, null, null, rawParams, type );
+	}
 
 	public HttpURLConnection doPut ( String p_url, Map<String, String> p_params, HttpServletRequest req ) throws IOException, OAuthSystemException, OAuthProblemException {
-		return doCall( req, p_url, OAuth.HttpMethod.PUT, p_params, null );
+		return doCall( req, p_url, OAuth.HttpMethod.PUT, p_params, null, null, null );
 	}
 
 	public HttpURLConnection doPut ( String p_url, Map<String, String> p_params, int timeout, HttpServletRequest req ) throws IOException, OAuthSystemException, OAuthProblemException {
-		return doCall( req, p_url, OAuth.HttpMethod.PUT, p_params, timeout );
+		return doCall( req, p_url, OAuth.HttpMethod.PUT, p_params, timeout, null, null );
 	}
 
 	public HttpURLConnection doDelete ( String p_url, HttpServletRequest req ) throws IOException, OAuthSystemException, OAuthProblemException {
-		return doCall( req, p_url, OAuth.HttpMethod.DELETE, null, null );
+		return doCall( req, p_url, OAuth.HttpMethod.DELETE, null, null, null, null );
 	}
 	public HttpURLConnection doDelete ( String p_url, int timeout, HttpServletRequest req ) throws IOException, OAuthSystemException, OAuthProblemException {
-		return doCall( req, p_url, OAuth.HttpMethod.DELETE, null, timeout );
+		return doCall( req, p_url, OAuth.HttpMethod.DELETE, null, timeout, null, null );
 	}
 
-	private HttpURLConnection doCall ( HttpServletRequest req, String url, String method, Map<String, String> params, Integer timeout ) throws IOException, OAuthSystemException, OAuthProblemException {
+	private HttpURLConnection doCall ( HttpServletRequest req, String url, String method, Map<String, String> params, Integer timeout, String rawParams, String type ) throws IOException, OAuthSystemException, OAuthProblemException {
 
 	    Date expiresIn = getExpiresIn(req);
 	    String accessToken = getAccessToken(req);
@@ -158,13 +161,13 @@ public class IgzOAuthClient {
 			if( GrantType.CLIENT_CREDENTIALS.toString().equals( getGrantType() )) {
 				getNewAccesToken(req);
 				
-				return doCall( req, url, method, params, timeout );
+				return doCall( req, url, method, params, timeout, rawParams, type );
 			} else if(  GrantType.AUTHORIZATION_CODE.toString().equals( getGrantType() ) ) {
 				 throw OAuthProblemException.error(OAuthError.TokenResponse.UNAUTHORIZED_CLIENT).description( OAuthError.TokenResponse.UNAUTHORIZED_CLIENT );
 			} else {
 				getNewAccesToken(req);
 				
-				return doCall( req, url, method, params, timeout );
+				return doCall( req, url, method, params, timeout, rawParams, type );
 			}
 
 		} else {
@@ -176,6 +179,10 @@ public class IgzOAuthClient {
 			conn.setRequestMethod( method );
 			conn.setRequestProperty(OAuth.HeaderType.CONTENT_TYPE, OAuth.ContentType.URL_ENCODED + ";charset="+ENCODING);
 			conn.setRequestProperty("Accept-Charset", ENCODING);
+			
+			if ( type != null ) {
+                conn.setRequestProperty("Content-Type", type);
+            }
 
 			if ( timeout != null && timeout > 0 ) {
 				logger.info("SET CONNECTION TIMEOUT: " + timeout);
@@ -187,9 +194,9 @@ public class IgzOAuthClient {
 			    conn.setDoOutput(true);
 			}
 			
-			if ( params != null && params.size() > 0 ) {
+			if ( (params != null && params.size() > 0) || rawParams != null ) {
 				OutputStream output = conn.getOutputStream();
-				output.write( getPayload(params) );
+				output.write( (rawParams != null) ? rawParams.getBytes() : getPayload(params) );
 				output.flush();
 				output.close();
 			}
@@ -204,7 +211,7 @@ public class IgzOAuthClient {
 	            
 				getNewAccesToken(req); // TODO grant type code not implemented!
 				
-				return doCall( req, url, method, params, timeout );
+				return doCall( req, url, method, params, timeout, rawParams, type );
 
 			} else {
 				logger.info("RESPONSE OK ");
