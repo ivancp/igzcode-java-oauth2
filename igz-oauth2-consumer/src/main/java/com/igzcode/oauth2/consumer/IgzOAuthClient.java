@@ -212,9 +212,13 @@ public class IgzOAuthClient {
 				req.getSession().setAttribute(OAuth.OAUTH_BEARER_TOKEN, null);
 	            req.getSession().setAttribute(OAuth.OAUTH_EXPIRES_IN, null);
 	            
-				getNewAccesToken(req); // TODO grant type code not implemented!
-				
-				return doCall( req, url, method, params, timeout, rawParams, type );
+	            if ( GrantType.CLIENT_CREDENTIALS.toString().equals( getGrantType() ) ) {
+                    getNewAccesToken(req);
+                } else if(  GrantType.AUTHORIZATION_CODE.toString().equals( getGrantType() ) ) {
+                    throw OAuthProblemException.error(OAuthError.TokenResponse.UNAUTHORIZED_CLIENT).description( OAuthError.TokenResponse.UNAUTHORIZED_CLIENT );
+                }
+	            
+	            return doCall( req, url, method, params, timeout, rawParams, type );
 
 			} else {
 				logger.info("RESPONSE OK ");
