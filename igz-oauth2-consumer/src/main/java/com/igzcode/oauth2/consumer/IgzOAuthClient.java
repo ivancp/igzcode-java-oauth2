@@ -7,6 +7,7 @@ import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLEncoder;
+import java.nio.charset.Charset;
 import java.util.Date;
 import java.util.Map;
 import java.util.logging.Logger;
@@ -39,6 +40,8 @@ public class IgzOAuthClient {
 	private static final String GRANT_TYPE = "oauth2.grantType";
 	private static final String AUTH_SERVLET_PATH = "oauth2.authServletPath";
 	private static final String LOGIN_ENDPOINT = "oauth2.loginServletPath";
+	
+	private static final Charset CHARSET = Charset.forName("UTF-8");
 	
 
 	private static final String ENCODING = "UTF-8";
@@ -196,7 +199,7 @@ public class IgzOAuthClient {
 			
 			if ( (params != null && params.size() > 0) || rawParams != null ) {
 				OutputStream output = conn.getOutputStream();
-				output.write( (rawParams != null) ? rawParams.getBytes() : getPayload(params) );
+				output.write( (rawParams != null) ? rawParams.getBytes(CHARSET) : getPayload(params) );
 				output.flush();
 				output.close();
 			}

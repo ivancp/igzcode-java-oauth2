@@ -16,7 +16,7 @@ public class PropertiesUtil {
     public PropertiesUtil(String p_filePath) {
         if (properties == null) {
             try {
-                File propertiesFile = new File(IgzOAuthClient.class.getClassLoader().getResource(p_filePath).toURI());
+                File propertiesFile = new File(PropertiesUtil.class.getClassLoader().getResource(p_filePath).toURI());
 
                 properties = new Properties();
                 properties.load(new FileInputStream(propertiesFile));
