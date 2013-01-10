@@ -45,6 +45,7 @@ public class IgzOAuthClient {
 	
 
 	private static final String ENCODING = "UTF-8";
+	private static final String HTTP_PATCH = "PATCH";
 
 	private String grantType;
 	private String applicationId;
@@ -142,6 +143,14 @@ public class IgzOAuthClient {
 	public HttpURLConnection doPut ( String p_url, Map<String, String> p_params, int timeout, HttpServletRequest req ) throws IOException, OAuthSystemException, OAuthProblemException {
 		return doCall( req, p_url, OAuth.HttpMethod.PUT, p_params, timeout, null, null );
 	}
+	
+	public HttpURLConnection doPatch ( String p_url, Map<String, String> p_params, HttpServletRequest req ) throws IOException, OAuthSystemException, OAuthProblemException {
+	    return doCall( req, p_url, HTTP_PATCH, p_params, null, null, null );
+	}
+	
+	public HttpURLConnection doPatch ( String p_url, Map<String, String> p_params, int timeout, HttpServletRequest req ) throws IOException, OAuthSystemException, OAuthProblemException {
+	    return doCall( req, p_url, HTTP_PATCH, p_params, timeout, null, null );
+	}
 
 	public HttpURLConnection doDelete ( String p_url, HttpServletRequest req ) throws IOException, OAuthSystemException, OAuthProblemException {
 		return doCall( req, p_url, OAuth.HttpMethod.DELETE, null, null, null, null );
@@ -193,7 +202,7 @@ public class IgzOAuthClient {
 			}
 
 			conn.setDoInput(true);
-			if ( method == OAuth.HttpMethod.POST || method == OAuth.HttpMethod.PUT ) {
+			if ( method == OAuth.HttpMethod.POST || method == OAuth.HttpMethod.PUT || method == HTTP_PATCH ) {
 			    conn.setDoOutput(true);
 			}
 			
