@@ -7,6 +7,7 @@ import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLEncoder;
+import java.nio.charset.Charset;
 import java.util.Date;
 import java.util.Map;
 import java.util.logging.Logger;
@@ -40,8 +41,11 @@ public class IgzOAuthClient {
 	private static final String AUTH_SERVLET_PATH = "oauth2.authServletPath";
 	private static final String LOGIN_ENDPOINT = "oauth2.loginServletPath";
 	
+	private static final Charset CHARSET = Charset.forName("UTF-8");
+	
 
 	private static final String ENCODING = "UTF-8";
+	private static final String HTTP_PATCH = "PATCH";
 
 	private String grantType;
 	private String applicationId;
@@ -139,6 +143,14 @@ public class IgzOAuthClient {
 	public HttpURLConnection doPut ( String p_url, Map<String, String> p_params, int timeout, HttpServletRequest req ) throws IOException, OAuthSystemException, OAuthProblemException {
 		return doCall( req, p_url, OAuth.HttpMethod.PUT, p_params, timeout, null, null );
 	}
+	
+	public HttpURLConnection doPatch ( String p_url, Map<String, String> p_params, HttpServletRequest req ) throws IOException, OAuthSystemException, OAuthProblemException {
+	    return doCall( req, p_url, HTTP_PATCH, p_params, null, null, null );
+	}
+	
+	public HttpURLConnection doPatch ( String p_url, Map<String, String> p_params, int timeout, HttpServletRequest req ) throws IOException, OAuthSystemException, OAuthProblemException {
+	    return doCall( req, p_url, HTTP_PATCH, p_params, timeout, null, null );
+	}
 
 	public HttpURLConnection doDelete ( String p_url, HttpServletRequest req ) throws IOException, OAuthSystemException, OAuthProblemException {
 		return doCall( req, p_url, OAuth.HttpMethod.DELETE, null, null, null, null );
@@ -190,13 +202,13 @@ public class IgzOAuthClient {
 			}
 
 			conn.setDoInput(true);
-			if ( method == OAuth.HttpMethod.POST || method == OAuth.HttpMethod.PUT ) {
+			if ( method == OAuth.HttpMethod.POST || method == OAuth.HttpMethod.PUT || method == HTTP_PATCH ) {
 			    conn.setDoOutput(true);
 			}
 			
 			if ( (params != null && params.size() > 0) || rawParams != null ) {
 				OutputStream output = conn.getOutputStream();
-				output.write( (rawParams != null) ? rawParams.getBytes() : getPayload(params) );
+				output.write( (rawParams != null) ? rawParams.getBytes(CHARSET) : getPayload(params) );
 				output.flush();
 				output.close();
 			}
@@ -209,9 +221,13 @@ public class IgzOAuthClient {
 				req.getSession().setAttribute(OAuth.OAUTH_BEARER_TOKEN, null);
 	            req.getSession().setAttribute(OAuth.OAUTH_EXPIRES_IN, null);
 	            
-				getNewAccesToken(req); // TODO grant type code not implemented!
-				
-				return doCall( req, url, method, params, timeout, rawParams, type );
+	            if ( GrantType.CLIENT_CREDENTIALS.toString().equals( getGrantType() ) ) {
+                    getNewAccesToken(req);
+                } else if(  GrantType.AUTHORIZATION_CODE.toString().equals( getGrantType() ) ) {
+                    throw OAuthProblemException.error(OAuthError.TokenResponse.UNAUTHORIZED_CLIENT).description( OAuthError.TokenResponse.UNAUTHORIZED_CLIENT );
+                }
+	            
+	            return doCall( req, url, method, params, timeout, rawParams, type );
 
 			} else {
 				logger.info("RESPONSE OK ");
