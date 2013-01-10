@@ -151,6 +151,14 @@ public class IgzOAuthClient {
 	public HttpURLConnection doPatch ( String p_url, Map<String, String> p_params, int timeout, HttpServletRequest req ) throws IOException, OAuthSystemException, OAuthProblemException {
 	    return doCall( req, p_url, HTTP_PATCH, p_params, timeout, null, null );
 	}
+	
+	public HttpURLConnection doPatch ( String p_url, String rawParams, int timeout, String type, HttpServletRequest req ) throws IOException, OAuthSystemException, OAuthProblemException {
+        return doCall( req, p_url, HTTP_PATCH, null, timeout, rawParams, type );
+    }
+	
+	public HttpURLConnection doPatch ( String p_url, String rawParams, String type, HttpServletRequest req ) throws IOException, OAuthSystemException, OAuthProblemException {
+        return doCall( req, p_url, HTTP_PATCH, null, null, rawParams, type );
+    }
 
 	public HttpURLConnection doDelete ( String p_url, HttpServletRequest req ) throws IOException, OAuthSystemException, OAuthProblemException {
 		return doCall( req, p_url, OAuth.HttpMethod.DELETE, null, null, null, null );
