@@ -173,7 +173,7 @@ public class IgzOAuthClient {
 	    String accessToken = getAccessToken(req);
 	    
 		// Check if access token is null or has been expired
-		if ( accessToken == null || ( expiresIn != null && new Date().getTime() >= expiresIn.getTime() ) ) {
+		if ( accessToken == null ) {
 		    logger.info("ACCESS TOKEN NULL OR EXPIRED accesToken[" + accessToken + "]");
 		    
 			accessToken = null;
@@ -190,6 +190,12 @@ public class IgzOAuthClient {
 				return doCall( req, url, method, params, timeout, rawParams, type );
 			}
 
+		} else if( expiresIn != null && new Date().getTime() >= expiresIn.getTime() ) {
+			
+			//TODO: call refreshToken
+			refreshToken(req);
+			return doCall( req, url, method, params, timeout, rawParams, type );
+			
 		} else {
 			logger.info("TRY CALL accesToken[" + accessToken + "] url[" + url + "] method[" + method + "]");
 
@@ -244,6 +250,22 @@ public class IgzOAuthClient {
 				return conn;
 			}
 		}
+	}
+	
+	private synchronized void refreshToken(HttpServletRequest req) throws OAuthProblemException {
+	    String accessToken = getAccessToken(req);
+	    
+	    // Due to synchronized method, we must check if an call has assigned access token value before
+	    if ( accessToken != null ) {
+	        return;
+	    }
+	    
+	    accessTokenTries ++;
+        if( accessTokenTries > 3 ) {
+            logger.info("GET NEW ACCESS TOKEN: ATTEMPTS EXCEEDED");
+            throw OAuthProblemException.error(OAuthError.TokenResponse.UNAUTHORIZED_CLIENT).description( OAuthError.TokenResponse.INVALID_CLIENT );
+        }
+	    
 	}
 
 	private synchronized void getNewAccesToken(HttpServletRequest req) throws OAuthSystemException, OAuthProblemException {
