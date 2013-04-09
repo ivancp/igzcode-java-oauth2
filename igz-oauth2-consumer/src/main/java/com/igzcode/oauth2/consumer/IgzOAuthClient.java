@@ -40,6 +40,7 @@ public class IgzOAuthClient {
 	private static final String GRANT_TYPE = "oauth2.grantType";
 	private static final String AUTH_SERVLET_PATH = "oauth2.authServletPath";
 	private static final String LOGIN_ENDPOINT = "oauth2.loginServletPath";
+	private static final String DEFAULT_EXPIRES_IN = "oauth2.defaultexpiresin";
 	
 	private static final Charset CHARSET = Charset.forName("UTF-8");
 	
@@ -53,6 +54,7 @@ public class IgzOAuthClient {
 	private String redirectUrl;
 	private String tokenLocation;
 	private String authLocation;
+	private Long defaultExpiresIn;
 	
 	private String authServletPath;
 	private String loginEndPoint;
@@ -70,6 +72,12 @@ public class IgzOAuthClient {
 	    redirectUrl = propertiesUtil.getString( REDIRECT_URI );
 	    authServletPath = propertiesUtil.getString( AUTH_SERVLET_PATH );
 	    loginEndPoint =  propertiesUtil.getString( LOGIN_ENDPOINT );
+	    try {	    	
+	    	defaultExpiresIn = Long.parseLong( propertiesUtil.getString(DEFAULT_EXPIRES_IN) );	
+	    } catch ( NumberFormatException e ) {
+	    	//logger.severe("Default Expired In is not a number, revise oauth2.properties file");
+	    	defaultExpiresIn = null;
+	    }
 	}
 
 	public Date getExpiresIn(HttpServletRequest p_request) {
@@ -78,6 +86,11 @@ public class IgzOAuthClient {
 	
 	public String getAccessToken(HttpServletRequest p_request) {
 	    return (String) p_request.getSession().getAttribute(OAuth.OAUTH_BEARER_TOKEN);
+	    
+	}
+	
+	public String getRefreshToken(HttpServletRequest p_request) {
+	    return (String) p_request.getSession().getAttribute(OAuth.OAUTH_REFRESH_TOKEN);
 	    
 	}
 	
@@ -234,6 +247,7 @@ public class IgzOAuthClient {
 
 				req.getSession().setAttribute(OAuth.OAUTH_BEARER_TOKEN, null);
 	            req.getSession().setAttribute(OAuth.OAUTH_EXPIRES_IN, null);
+				req.getSession().setAttribute(OAuth.OAUTH_REFRESH_TOKEN, null);
 	            
 	            if ( GrantType.CLIENT_CREDENTIALS.toString().equals( getGrantType() ) ) {
                     getNewAccesToken(req);
@@ -252,12 +266,20 @@ public class IgzOAuthClient {
 		}
 	}
 	
-	private synchronized void refreshToken(HttpServletRequest req) throws OAuthProblemException {
+	private synchronized void refreshToken(HttpServletRequest req) throws OAuthProblemException, OAuthSystemException {
 	    String accessToken = getAccessToken(req);
+	    Date expiresIn = getExpiresIn(req);
+	    String refreshToken = getRefreshToken(req);
 	    
-	    // Due to synchronized method, we must check if an call has assigned access token value before
-	    if ( accessToken != null ) {
-	        return;
+	    // if expiresIn and defaultExpiresIn is null request new accessToken 
+	    if ( expiresIn == null && defaultExpiresIn == null ){
+	    	accessToken = null;
+	    	return;
+	    }
+	    
+	    // Due to synchronized method, we must check if an call has updated the access token value before
+	    if ( expiresIn != null && new Date().getTime() < expiresIn.getTime() ) {	        
+	    	return;
 	    }
 	    
 	    accessTokenTries ++;
@@ -265,12 +287,41 @@ public class IgzOAuthClient {
             logger.info("GET NEW ACCESS TOKEN: ATTEMPTS EXCEEDED");
             throw OAuthProblemException.error(OAuthError.TokenResponse.UNAUTHORIZED_CLIENT).description( OAuthError.TokenResponse.INVALID_CLIENT );
         }
+        
+        OAuthClientRequest request = OAuthClientRequest
+				.tokenLocation( getTokenLocation() )
+				.setGrantType( GrantType.REFRESH_TOKEN )
+				.setClientId( getApplicationId() )
+				.setClientSecret( getApplicationSecret() )
+				.setRefreshToken( getRefreshToken(req) )
+				.buildBodyMessage();
+
+		OAuthClient oAuthClient = new OAuthClient(new URLConnectionClient());
+		OAuthAccessTokenResponse oAuthResponse = oAuthClient.accessToken(request);
+
+		accessToken = oAuthResponse.getAccessToken();
+
+		expiresIn = new Date();
+		
+		Long responseExpiredIn = oAuthResponse.getExpiresIn();
+		if(responseExpiredIn == null || responseExpiredIn == 0l ){
+			responseExpiredIn = defaultExpiresIn;
+		}
+		
+		expiresIn.setTime( expiresIn.getTime() + ( responseExpiredIn * 1000) );
+		
+		req.getSession().setAttribute(OAuth.OAUTH_BEARER_TOKEN, accessToken);
+		req.getSession().setAttribute(OAuth.OAUTH_EXPIRES_IN, expiresIn);
+		req.getSession().setAttribute(OAuth.OAUTH_REFRESH_TOKEN, refreshToken);
+
+		logger.info("NEW TOKEN[" + accessToken + "] EXPIRES IN[" + expiresIn + "]");       
 	    
 	}
 
 	private synchronized void getNewAccesToken(HttpServletRequest req) throws OAuthSystemException, OAuthProblemException {
 	    
 	    String accessToken = getAccessToken(req);
+	    String refreshToken;
 	    
 	    // Due to synchronized method, we must check if an call has assigned access token value before
 	    if ( accessToken != null ) {
@@ -299,12 +350,20 @@ public class IgzOAuthClient {
 			OAuthAccessTokenResponse oAuthResponse = oAuthClient.accessToken(request);
 
 			accessToken = oAuthResponse.getAccessToken();
+			refreshToken = oAuthResponse.getRefreshToken();
 
 			Date expiresIn = new Date();
-			expiresIn.setTime( expiresIn.getTime() + (oAuthResponse.getExpiresIn() * 1000) );
+			
+			Long responseExpiredIn = oAuthResponse.getExpiresIn();
+			if(responseExpiredIn == null || responseExpiredIn == 0l ){
+				responseExpiredIn = defaultExpiresIn;
+			}
+			
+			expiresIn.setTime( expiresIn.getTime() + ( responseExpiredIn * 1000) );
 			
 			req.getSession().setAttribute(OAuth.OAUTH_BEARER_TOKEN, accessToken);
 			req.getSession().setAttribute(OAuth.OAUTH_EXPIRES_IN, expiresIn);
+			req.getSession().setAttribute(OAuth.OAUTH_REFRESH_TOKEN, refreshToken);
 
 			logger.info("NEW TOKEN[" + accessToken + "] EXPIRES IN[" + expiresIn + "]");
 			
