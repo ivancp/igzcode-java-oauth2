@@ -78,6 +78,14 @@ public class IgzOAuthClient {
 	    	//logger.severe("Default Expired In is not a number, revise oauth2.properties file");
 	    	defaultExpiresIn = null;
 	    }
+	}	
+	
+	public Long getDefaultExpiresIn() {
+		return defaultExpiresIn;
+	}
+
+	public void setDefaultExpiresIn(Long defaultExpiresIn) {
+		this.defaultExpiresIn = defaultExpiresIn;
 	}
 
 	public Date getExpiresIn(HttpServletRequest p_request) {

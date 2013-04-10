@@ -53,17 +53,22 @@ public class TokenServlet extends HttpServlet {
             OAuthAccessTokenResponse oAuthResponse = oAuthClient.accessToken(oautReq);
 
             String accessToken = oAuthResponse.getAccessToken();
+            String refreshToken = oAuthResponse.getRefreshToken();
             
             Date expiresIn = null;
             Long expiresL = oAuthResponse.getExpiresIn();
             
             if(expiresL != null){
-                    expiresIn = new Date();
-                    expiresIn.setTime( expiresIn.getTime() + (oAuthResponse.getExpiresIn() * 1000) );
+                expiresIn = new Date();
+                expiresIn.setTime( expiresIn.getTime() + (oAuthResponse.getExpiresIn() * 1000) );
+            } else if( igzOAuthClient.getDefaultExpiresIn() != null ) {
+                expiresIn = new Date();
+            	expiresIn.setTime(expiresIn.getTime() + (igzOAuthClient.getDefaultExpiresIn() * 1000) );
             }
 
             request.getSession().setAttribute(OAuth.OAUTH_BEARER_TOKEN, accessToken);
             request.getSession().setAttribute(OAuth.OAUTH_EXPIRES_IN, expiresIn);
+            request.getSession().setAttribute(OAuth.OAUTH_REFRESH_TOKEN, refreshToken);
 
             response.sendRedirect(igzOAuthClient.getLoginEndPoint());
 
