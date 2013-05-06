@@ -4,7 +4,7 @@
 
 	<groupId>com.igzcode.java</groupId>
 	<artifactId>igzcode-oauth2-consumer</artifactId>
-	<version>1.0.5-SNAPSHOT</version>
+	<version>1.0.6</version>
 	<packaging>jar</packaging>
 
 	<name>IGZ OAuth2 Consumer</name>
@@ -35,6 +35,12 @@
 			<version>2.5</version>
 			<scope>provided</scope>
 		</dependency>
+	    <dependency>
+	      <groupId>com.google.code.gson</groupId>
+	      <artifactId>gson</artifactId>
+	      <version>2.2.3</version>
+	      <scope>compile</scope>
+	    </dependency>
 	</dependencies>
 	
 	<repositories>

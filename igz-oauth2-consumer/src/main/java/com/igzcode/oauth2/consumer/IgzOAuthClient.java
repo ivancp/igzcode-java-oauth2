@@ -1,7 +1,10 @@
 package com.igzcode.oauth2.consumer;
 
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
@@ -26,6 +29,8 @@ import org.apache.amber.oauth2.common.exception.OAuthSystemException;
 import org.apache.amber.oauth2.common.message.types.GrantType;
 
 import com.igzcode.oauth2.consumer.util.PropertiesUtil;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonParser;
 
 
 public class IgzOAuthClient {
@@ -41,6 +46,7 @@ public class IgzOAuthClient {
 	private static final String AUTH_SERVLET_PATH = "oauth2.authServletPath";
 	private static final String LOGIN_ENDPOINT = "oauth2.loginServletPath";
 	private static final String DEFAULT_EXPIRES_IN = "oauth2.defaultexpiresin";
+	private static final String CONNECTION_TIMEOUT = "oauth2.connectionTimeout";
 	
 	private static final Charset CHARSET = Charset.forName("UTF-8");
 	
@@ -55,6 +61,7 @@ public class IgzOAuthClient {
 	private String tokenLocation;
 	private String authLocation;
 	private Long defaultExpiresIn;
+	private Integer connectionTimeout;
 	
 	private String authServletPath;
 	private String loginEndPoint;
@@ -72,6 +79,11 @@ public class IgzOAuthClient {
 	    redirectUrl = propertiesUtil.getString( REDIRECT_URI );
 	    authServletPath = propertiesUtil.getString( AUTH_SERVLET_PATH );
 	    loginEndPoint =  propertiesUtil.getString( LOGIN_ENDPOINT );
+	    try {
+	    	connectionTimeout = Integer.parseInt(propertiesUtil.getString(CONNECTION_TIMEOUT));
+	    } catch ( NumberFormatException e ) {
+	    	connectionTimeout = 60000;
+	    }
 	    try {	    	
 	    	defaultExpiresIn = Long.parseLong( propertiesUtil.getString(DEFAULT_EXPIRES_IN) );	
 	    } catch ( NumberFormatException e ) {
@@ -132,6 +144,14 @@ public class IgzOAuthClient {
 
 	public String getRedirectUrl(){
 		return redirectUrl;
+	}	
+
+	public Integer getConnectionTimeout() {
+		return connectionTimeout;
+	}
+
+	public void setConnectionTimeout(Integer connectionTimeout) {
+		this.connectionTimeout = connectionTimeout;
 	}
 
 	public HttpURLConnection doGet ( String p_url, HttpServletRequest req ) throws IOException, OAuthSystemException, OAuthProblemException {
@@ -192,6 +212,7 @@ public class IgzOAuthClient {
 
 	    Date expiresIn = getExpiresIn(req);
 	    String accessToken = getAccessToken(req);
+	    Date date = new Date();
 	    
 		// Check if access token is null or has been expired
 		if ( accessToken == null ) {
@@ -296,33 +317,65 @@ public class IgzOAuthClient {
             throw OAuthProblemException.error(OAuthError.TokenResponse.UNAUTHORIZED_CLIENT).description( OAuthError.TokenResponse.INVALID_CLIENT );
         }
         
-        OAuthClientRequest request = OAuthClientRequest
-				.tokenLocation( getTokenLocation() )
-				.setGrantType( GrantType.REFRESH_TOKEN )
-				.setClientId( getApplicationId() )
-				.setClientSecret( getApplicationSecret() )
-				.setRefreshToken( getRefreshToken(req) )
-				.buildBodyMessage();
-
-		OAuthClient oAuthClient = new OAuthClient(new URLConnectionClient());
-		OAuthAccessTokenResponse oAuthResponse = oAuthClient.accessToken(request);
-
-		accessToken = oAuthResponse.getAccessToken();
-
-		expiresIn = new Date();
+        String url = tokenLocation;        
+        String query = "?grant_type=refresh_token&client_id="+applicationId+"&client_secret="+applicationSecret+"&refresh_token="+refreshToken;
+        url += query;
+        try{
+	        HttpURLConnection conn = (HttpURLConnection) new URL(url).openConnection();
+	        
+	
+			conn.setRequestMethod( OAuth.HttpMethod.GET );
+			conn.setDoOutput(true);
 		
-		Long responseExpiredIn = oAuthResponse.getExpiresIn();
-		if(responseExpiredIn == null || responseExpiredIn == 0l ){
-			responseExpiredIn = defaultExpiresIn;
-		}
-		
-		expiresIn.setTime( expiresIn.getTime() + ( responseExpiredIn * 1000) );
-		
-		req.getSession().setAttribute(OAuth.OAUTH_BEARER_TOKEN, accessToken);
-		req.getSession().setAttribute(OAuth.OAUTH_EXPIRES_IN, expiresIn);
-		req.getSession().setAttribute(OAuth.OAUTH_REFRESH_TOKEN, refreshToken);
-
-		logger.info("NEW TOKEN[" + accessToken + "] EXPIRES IN[" + expiresIn + "]");       
+			conn.setConnectTimeout(connectionTimeout);
+			Integer responseCode = conn.getResponseCode();
+	        String resultado;
+	        StringBuffer text = new StringBuffer();
+			InputStreamReader in = new InputStreamReader((InputStream) conn.getContent(), "UTF8");
+			BufferedReader buff = new BufferedReader(in);
+			String line = buff.readLine();                
+			while (line != null){
+				text.append(line + "\n");
+				line = buff.readLine();
+			}             
+			resultado = text.toString();
+			
+			JsonParser parser = new JsonParser();
+			JsonElement jsonElement;
+			
+			if(parser.parse(resultado).isJsonObject()){
+				//return json object
+				jsonElement = parser.parse(resultado).getAsJsonObject();
+				if( jsonElement.getAsJsonObject() != null && jsonElement.getAsJsonObject().get("access_token") != null && jsonElement.getAsJsonObject().get("access_token").getAsString() != null){
+					accessToken = jsonElement.getAsJsonObject().get("access_token").getAsString();
+				}
+				expiresIn = new Date();
+				Long responseExpiredIn;
+				if( jsonElement.getAsJsonObject() != null && jsonElement.getAsJsonObject().get("expires_in") != null && jsonElement.getAsJsonObject().get("expires_in").getAsString() != null){		
+					responseExpiredIn = jsonElement.getAsJsonObject().get("expires_in").getAsLong();
+					if(responseExpiredIn == null || responseExpiredIn == 0l ){
+						responseExpiredIn = defaultExpiresIn;
+					}
+				} else {
+					responseExpiredIn = defaultExpiresIn;
+				}
+				if( jsonElement.getAsJsonObject() != null && jsonElement.getAsJsonObject().get("refresh_token") != null && jsonElement.getAsJsonObject().get("refresh_token").getAsString() != null){	
+					refreshToken = jsonElement.getAsJsonObject().get("refresh_token").getAsString();
+				}
+	
+				expiresIn.setTime( expiresIn.getTime() + ( responseExpiredIn * 1000) );
+				
+				req.getSession().setAttribute(OAuth.OAUTH_BEARER_TOKEN, accessToken);
+				req.getSession().setAttribute(OAuth.OAUTH_EXPIRES_IN, expiresIn);
+				req.getSession().setAttribute(OAuth.OAUTH_REFRESH_TOKEN, refreshToken);
+	
+				logger.info("NEW TOKEN[" + accessToken + "] EXPIRES IN[" + expiresIn + "]"); 	
+				
+				
+			} 
+        } catch (IOException e){
+			return;
+		} 
 	    
 	}
 
