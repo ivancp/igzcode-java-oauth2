@@ -8,10 +8,13 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.nio.charset.Charset;
+import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Logger;
 
@@ -28,9 +31,9 @@ import org.apache.amber.oauth2.common.exception.OAuthProblemException;
 import org.apache.amber.oauth2.common.exception.OAuthSystemException;
 import org.apache.amber.oauth2.common.message.types.GrantType;
 
-import com.igzcode.oauth2.consumer.util.PropertiesUtil;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
+import com.igzcode.oauth2.consumer.util.PropertiesUtil;
 
 
 public class IgzOAuthClient {
@@ -47,6 +50,10 @@ public class IgzOAuthClient {
 	private static final String LOGIN_ENDPOINT = "oauth2.loginServletPath";
 	private static final String DEFAULT_EXPIRES_IN = "oauth2.defaultexpiresin";
 	private static final String CONNECTION_TIMEOUT = "oauth2.connectionTimeout";
+	private static final String UPDATE_TOKEN_URL = "oauth2.updateToken";
+	
+	private static final String USER_ID = "USER_ID";
+	private static final String DEFAULT_DATE_FORMAT = "yyyy-MM-dd HH:mm:ss.S";
 	
 	private static final Charset CHARSET = Charset.forName("UTF-8");
 	
@@ -65,6 +72,7 @@ public class IgzOAuthClient {
 	
 	private String authServletPath;
 	private String loginEndPoint;
+	private String updateTokenUrl;
 
 	private int accessTokenTries = 0;
 
@@ -79,6 +87,8 @@ public class IgzOAuthClient {
 	    redirectUrl = propertiesUtil.getString( REDIRECT_URI );
 	    authServletPath = propertiesUtil.getString( AUTH_SERVLET_PATH );
 	    loginEndPoint =  propertiesUtil.getString( LOGIN_ENDPOINT );
+	    updateTokenUrl = propertiesUtil.getString(UPDATE_TOKEN_URL);
+	    
 	    try {
 	    	connectionTimeout = Integer.parseInt(propertiesUtil.getString(CONNECTION_TIMEOUT));
 	    } catch ( NumberFormatException e ) {
@@ -234,7 +244,7 @@ public class IgzOAuthClient {
 
 		} else if( expiresIn != null && new Date().getTime() >= expiresIn.getTime() ) {
 			
-			//TODO: call refreshToken
+			//TODO: call refreshToken			
 			refreshToken(req);
 			return doCall( req, url, method, params, timeout, rawParams, type );
 			
@@ -368,6 +378,13 @@ public class IgzOAuthClient {
 				req.getSession().setAttribute(OAuth.OAUTH_BEARER_TOKEN, accessToken);
 				req.getSession().setAttribute(OAuth.OAUTH_EXPIRES_IN, expiresIn);
 				req.getSession().setAttribute(OAuth.OAUTH_REFRESH_TOKEN, refreshToken);
+				
+				try{
+					Long userId =  (Long)req.getSession().getAttribute(USER_ID);
+					updateToken(userId, accessToken, refreshToken, expiresIn);
+				} catch( Exception e ){
+					logger.severe("Update token Error \n"+e.getMessage());
+				}
 	
 				logger.info("NEW TOKEN[" + accessToken + "] EXPIRES IN[" + expiresIn + "]"); 	
 				
@@ -377,6 +394,46 @@ public class IgzOAuthClient {
 			return;
 		} 
 	    
+	}
+	
+	private void updateToken(Long userId, String accessToken, String refreshToken, Date expiresIn){
+		
+		try {
+			HttpURLConnection conn = (HttpURLConnection) new URL(updateTokenUrl+"/"+userId).openConnection();
+
+			conn.setRequestProperty(OAuth.HeaderType.CONTENT_TYPE, OAuth.ContentType.URL_ENCODED + ";charset="+ENCODING);
+			conn.setRequestProperty("Accept-Charset", ENCODING);
+			
+			conn.setRequestMethod( OAuth.HttpMethod.PUT );
+			conn.setDoOutput(true);
+		
+			HashMap<String, String> params = new HashMap<String,String>();
+			params.put("a", accessToken);
+			params.put("r", refreshToken);
+			
+			if(expiresIn != null){
+			
+			SimpleDateFormat dateFormat = new SimpleDateFormat(DEFAULT_DATE_FORMAT);
+			String sExpiresIn = dateFormat.format(expiresIn);
+			params.put("e", sExpiresIn);
+			
+			}
+			
+			OutputStream output = conn.getOutputStream();
+			output.write( getPayload(params) );
+			output.flush();
+			output.close();
+			
+			conn.setConnectTimeout(connectionTimeout);
+			Integer responseCode = conn.getResponseCode();
+			logger.severe(responseCode+"");
+			
+		} catch (MalformedURLException e) {
+			logger.severe("The updateToken url is wrong \n"+e.getMessage());
+		} catch (IOException e) {
+			logger.severe("Error connectin with the server in updateToken \n"+e.getMessage());
+		}
+		
 	}
 
 	private synchronized void getNewAccesToken(HttpServletRequest req) throws OAuthSystemException, OAuthProblemException {
