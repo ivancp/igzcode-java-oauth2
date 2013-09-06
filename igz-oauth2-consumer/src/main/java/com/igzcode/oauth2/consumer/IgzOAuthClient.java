@@ -399,7 +399,7 @@ public class IgzOAuthClient {
 	private void updateToken(Long userId, String accessToken, String refreshToken, Date expiresIn){
 		
 		try {
-			HttpURLConnection conn = (HttpURLConnection) new URL(updateTokenUrl+"/"+userId).openConnection();
+			HttpURLConnection conn = (HttpURLConnection) new URL(updateTokenUrl).openConnection();
 
 			conn.setRequestProperty(OAuth.HeaderType.CONTENT_TYPE, OAuth.ContentType.URL_ENCODED + ";charset="+ENCODING);
 			conn.setRequestProperty("Accept-Charset", ENCODING);
@@ -408,6 +408,7 @@ public class IgzOAuthClient {
 			conn.setDoOutput(true);
 		
 			HashMap<String, String> params = new HashMap<String,String>();
+			params.put("id",  userId.toString() );
 			params.put("a", accessToken);
 			params.put("r", refreshToken);
 			
