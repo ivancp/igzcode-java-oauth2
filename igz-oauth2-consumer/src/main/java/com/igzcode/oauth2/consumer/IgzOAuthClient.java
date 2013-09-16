@@ -1,7 +1,10 @@
 package com.igzcode.oauth2.consumer;
 
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
@@ -25,6 +28,8 @@ import org.apache.amber.oauth2.common.exception.OAuthProblemException;
 import org.apache.amber.oauth2.common.exception.OAuthSystemException;
 import org.apache.amber.oauth2.common.message.types.GrantType;
 
+import com.google.gson.JsonElement;
+import com.google.gson.JsonParser;
 import com.igzcode.oauth2.consumer.util.PropertiesUtil;
 
 
@@ -336,6 +341,72 @@ public class IgzOAuthClient {
 		}
 	}
 
+	public void refreshToken( HttpServletRequest req, String refreshToken ) throws OAuthProblemException, OAuthSystemException {
+	    String accessToken = getAccessToken(req);
+	    Date expiresIn = getExpiresIn(req);
+	    
+        String url = tokenLocation;        
+        String query = "?grant_type=refresh_token&client_id="+applicationId+"&client_secret="+applicationSecret+"&refresh_token="+refreshToken;
+        url += query;
+        
+        try{
+	        HttpURLConnection conn = (HttpURLConnection) new URL(url).openConnection();
+	        
+	
+			conn.setRequestMethod( OAuth.HttpMethod.GET );
+			conn.setDoOutput(true);
+		
+			conn.setConnectTimeout(connectionTimeout);
+			Integer responseCode = conn.getResponseCode();
+	        String resultado;
+	        StringBuffer text = new StringBuffer();
+			InputStreamReader in = new InputStreamReader((InputStream) conn.getContent(), "UTF8");
+			BufferedReader buff = new BufferedReader(in);
+			String line = buff.readLine();                
+			while (line != null){
+				text.append(line + "\n");
+				line = buff.readLine();
+			}             
+			resultado = text.toString();
+			
+			JsonParser parser = new JsonParser();
+			JsonElement jsonElement;
+			
+			if(parser.parse(resultado).isJsonObject()){
+				//return json object
+				jsonElement = parser.parse(resultado).getAsJsonObject();
+				if( jsonElement.getAsJsonObject() != null && jsonElement.getAsJsonObject().get("access_token") != null && jsonElement.getAsJsonObject().get("access_token").getAsString() != null){
+					accessToken = jsonElement.getAsJsonObject().get("access_token").getAsString();
+				}
+				expiresIn = new Date();
+				Long responseExpiredIn;
+				if( jsonElement.getAsJsonObject() != null && jsonElement.getAsJsonObject().get("expires_in") != null && jsonElement.getAsJsonObject().get("expires_in").getAsString() != null){		
+					responseExpiredIn = jsonElement.getAsJsonObject().get("expires_in").getAsLong();
+					if(responseExpiredIn == null || responseExpiredIn == 0l ){
+						responseExpiredIn = defaultExpiresIn;
+					}
+				} else {
+					responseExpiredIn = defaultExpiresIn;
+				}
+				if( jsonElement.getAsJsonObject() != null && jsonElement.getAsJsonObject().get("refresh_token") != null && jsonElement.getAsJsonObject().get("refresh_token").getAsString() != null){	
+					refreshToken = jsonElement.getAsJsonObject().get("refresh_token").getAsString();
+				}
+	
+				expiresIn.setTime( expiresIn.getTime() + ( responseExpiredIn * 1000) );				
+				
+				req.getSession().setAttribute(OAuth.OAUTH_BEARER_TOKEN, accessToken);
+				req.getSession().setAttribute(OAuth.OAUTH_EXPIRES_IN, expiresIn);
+				req.getSession().setAttribute(OAuth.OAUTH_REFRESH_TOKEN, refreshToken);
+	
+				logger.info("NEW TOKEN[" + accessToken + "] EXPIRES IN[" + expiresIn + "]"); 	
+				
+				
+			} 
+        } catch (IOException e){
+			return;
+		} 
+	    
+	}
 
 	private byte[] getPayload (Map<String, String> params) throws UnsupportedEncodingException {
 		StringBuilder sbPayload = new StringBuilder("");
