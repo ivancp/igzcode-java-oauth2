@@ -10,7 +10,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.apache.amber.oauth2.client.OAuthClient;
-import org.apache.amber.oauth2.client.URLConnectionClient;
 import org.apache.amber.oauth2.client.request.OAuthClientRequest;
 import org.apache.amber.oauth2.client.response.OAuthAccessTokenResponse;
 import org.apache.amber.oauth2.client.response.OAuthAuthzResponse;
@@ -20,6 +19,7 @@ import org.apache.amber.oauth2.common.exception.OAuthSystemException;
 import org.apache.amber.oauth2.common.message.types.GrantType;
 
 import com.igzcode.oauth2.consumer.IgzOAuthClient;
+import com.igzcode.oauth2.consumer.IgzURLConnectionClient;
 
 public class TokenServlet extends HttpServlet {
 
@@ -49,7 +49,7 @@ public class TokenServlet extends HttpServlet {
                     .setClientSecret(igzOAuthClient.getApplicationSecret()).setRedirectURI(igzOAuthClient.getRedirectUrl()).setCode(code)
                     .buildBodyMessage();
 
-            OAuthClient oAuthClient = new OAuthClient(new URLConnectionClient(igzOAuthClient.getConnectionTimeout()));
+            OAuthClient oAuthClient = new OAuthClient(new IgzURLConnectionClient(igzOAuthClient.getConnectionTimeout()));
             OAuthAccessTokenResponse oAuthResponse = oAuthClient.accessToken(oautReq);
 
             String accessToken = oAuthResponse.getAccessToken();
