@@ -49,7 +49,7 @@ public class TokenServlet extends HttpServlet {
                     .setClientSecret(igzOAuthClient.getApplicationSecret()).setRedirectURI(igzOAuthClient.getRedirectUrl()).setCode(code)
                     .buildBodyMessage();
 
-            OAuthClient oAuthClient = new OAuthClient(new URLConnectionClient());
+            OAuthClient oAuthClient = new OAuthClient(new URLConnectionClient(igzOAuthClient.getConnectionTimeout()));
             OAuthAccessTokenResponse oAuthResponse = oAuthClient.accessToken(oautReq);
 
             String accessToken = oAuthResponse.getAccessToken();
@@ -57,13 +57,20 @@ public class TokenServlet extends HttpServlet {
             Date expiresIn = null;
             Long expiresL = oAuthResponse.getExpiresIn();
             
+
+            String refreshToken = oAuthResponse.getRefreshToken();
+            
             if(expiresL != null){
-                    expiresIn = new Date();
-                    expiresIn.setTime( expiresIn.getTime() + (oAuthResponse.getExpiresIn() * 1000) );
+                expiresIn = new Date();
+                expiresIn.setTime( expiresIn.getTime() + (oAuthResponse.getExpiresIn() * 1000) );
+            } else if( igzOAuthClient.getDefaultExpiresIn() != null ) {
+                expiresIn = new Date();
+            	expiresIn.setTime(expiresIn.getTime() + (igzOAuthClient.getDefaultExpiresIn() * 1000) );
             }
 
             request.getSession().setAttribute(OAuth.OAUTH_BEARER_TOKEN, accessToken);
             request.getSession().setAttribute(OAuth.OAUTH_EXPIRES_IN, expiresIn);
+            request.getSession().setAttribute(OAuth.OAUTH_REFRESH_TOKEN, refreshToken);
 
             response.sendRedirect(igzOAuthClient.getLoginEndPoint());
 
