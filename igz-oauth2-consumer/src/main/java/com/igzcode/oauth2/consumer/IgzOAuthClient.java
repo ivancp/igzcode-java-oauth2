@@ -12,6 +12,7 @@ import java.net.URL;
 import java.net.URLEncoder;
 import java.nio.charset.Charset;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Logger;
 
@@ -42,6 +43,7 @@ public class IgzOAuthClient {
 	private static final String TOKEN_LOCATION = "oauth2.tokenEndPoint";
 	private static final String AUTH_LOCATION = "oauth2.authEndPoint";
 	private static final String REDIRECT_URI = "oauth2.redirecUrl";
+	private static final String REVOKE_URI = "oauth2.revokeUrl";
 	private static final String GRANT_TYPE = "oauth2.grantType";
 	private static final String AUTH_SERVLET_PATH = "oauth2.authServletPath";
 	private static final String LOGIN_ENDPOINT = "oauth2.loginServletPath";
@@ -58,6 +60,7 @@ public class IgzOAuthClient {
 	private String applicationId;
 	private String applicationSecret;
 	private String redirectUrl;
+	private String revokeUrl;
 	private String tokenLocation;
 	private String authLocation;
 	private Long defaultExpiresIn;
@@ -77,6 +80,7 @@ public class IgzOAuthClient {
 	    tokenLocation = propertiesUtil.getString( TOKEN_LOCATION );
 	    applicationSecret = propertiesUtil.getString( APP_SECRET );
 	    redirectUrl = propertiesUtil.getString( REDIRECT_URI );
+	    revokeUrl = propertiesUtil.getString( REVOKE_URI );
 	    authServletPath = propertiesUtil.getString( AUTH_SERVLET_PATH );
 	    loginEndPoint =  propertiesUtil.getString( LOGIN_ENDPOINT );
 	    
@@ -341,16 +345,18 @@ public class IgzOAuthClient {
 		}
 	}
 
-	public void refreshToken( HttpServletRequest req, String refreshToken ) throws OAuthProblemException, OAuthSystemException {
-	    String accessToken = getAccessToken(req);
+	public void refreshToken( HttpServletRequest req, String refreshToken ) throws OAuthProblemException, OAuthSystemException, IOException {
+	    
+		revokeToken(req);
+		
+		String accessToken = getAccessToken(req);
 	    Date expiresIn = getExpiresIn(req);
 	    
         String url = tokenLocation;        
         String query = "?grant_type=refresh_token&client_id="+applicationId+"&client_secret="+applicationSecret+"&refresh_token="+refreshToken;
         url += query;
         
-        try{
-	        HttpURLConnection conn = (HttpURLConnection) new URL(url).openConnection();
+            HttpURLConnection conn = (HttpURLConnection) new URL(url).openConnection();
 	        
 	
 			conn.setRequestMethod( OAuth.HttpMethod.GET );
@@ -402,10 +408,33 @@ public class IgzOAuthClient {
 				
 				
 			} 
-        } catch (IOException e){
-			return;
-		} 
 	    
+	}
+	
+	private void revokeToken( HttpServletRequest req ) throws IOException {
+		String accessToken = getAccessToken(req);
+        String url = revokeUrl;
+        
+            HttpURLConnection conn = (HttpURLConnection) new URL(url).openConnection();
+	        
+	
+			conn.setRequestMethod( OAuth.HttpMethod.POST );
+			conn.setDoOutput(true);
+			conn.setRequestProperty(OAuth.HeaderType.CONTENT_TYPE, OAuth.ContentType.URL_ENCODED);
+		
+			conn.setConnectTimeout(connectionTimeout);
+			
+			HashMap<String, String> params = new HashMap<String, String>(); 
+			params.put("token", accessToken);
+			
+			OutputStream output = conn.getOutputStream();
+			output.write( getPayload(params) );
+			output.flush();
+			output.close();
+			
+			Integer responseCode = conn.getResponseCode();
+			System.out.println(responseCode);
+		
 	}
 
 	private byte[] getPayload (Map<String, String> params) throws UnsupportedEncodingException {
