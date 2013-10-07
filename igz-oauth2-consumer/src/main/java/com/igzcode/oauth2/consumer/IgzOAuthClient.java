@@ -18,6 +18,7 @@ import java.util.logging.Logger;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
 
 import org.apache.amber.oauth2.client.OAuthClient;
 import org.apache.amber.oauth2.client.URLConnectionClient;
@@ -113,17 +114,17 @@ public class IgzOAuthClient {
 		this.defaultExpiresIn = defaultExpiresIn;
 	}
 
-	public Date getExpiresIn(HttpServletRequest p_request) {
-	    return (Date) p_request.getSession().getAttribute(OAuth.OAUTH_EXPIRES_IN);
+	public Date getExpiresIn(HttpSession session) {
+	    return (Date) session.getAttribute(OAuth.OAUTH_EXPIRES_IN);
 	}
 	
-	public String getAccessToken(HttpServletRequest p_request) {
-	    return (String) p_request.getSession().getAttribute(OAuth.OAUTH_BEARER_TOKEN);
+	public String getAccessToken(HttpSession session) {
+	    return (String) session.getAttribute(OAuth.OAUTH_BEARER_TOKEN);
 	    
 	}
 	
-	public String getRefreshToken(HttpServletRequest p_request) {
-	    return (String) p_request.getSession().getAttribute(OAuth.OAUTH_REFRESH_TOKEN);
+	public String getRefreshToken(HttpSession session) {
+	    return (String) session.getAttribute(OAuth.OAUTH_REFRESH_TOKEN);
 	    
 	}
 	
@@ -159,64 +160,118 @@ public class IgzOAuthClient {
 		return redirectUrl;
 	}
 
-	public HttpURLConnection doGet ( String p_url, HttpServletRequest req ) throws IOException, OAuthSystemException, OAuthProblemException {
-		return doCall( req, p_url, OAuth.HttpMethod.GET, null, null, null, null );
+	public HttpURLConnection doGet ( String p_url, HttpSession session ) throws IOException, OAuthSystemException, OAuthProblemException {
+		return doCall( session, p_url, OAuth.HttpMethod.GET, null, null, null, null );
 	}
 
-	public HttpURLConnection doGet ( String p_url, int timeout, HttpServletRequest req ) throws IOException, OAuthSystemException, OAuthProblemException {
-		return doCall( req, p_url, OAuth.HttpMethod.GET, null, timeout, null, null );
+	public HttpURLConnection doGet ( String p_url, int timeout, HttpSession session ) throws IOException, OAuthSystemException, OAuthProblemException {
+		return doCall( session, p_url, OAuth.HttpMethod.GET, null, timeout, null, null );
 	}
 
-	public HttpURLConnection doPost ( String p_url, Map<String, String> p_params, HttpServletRequest req ) throws IOException, OAuthSystemException, OAuthProblemException {
-		return doCall( req, p_url, OAuth.HttpMethod.POST, p_params, null, null, null );
+	public HttpURLConnection doPost ( String p_url, Map<String, String> p_params, HttpSession session ) throws IOException, OAuthSystemException, OAuthProblemException {
+		return doCall( session, p_url, OAuth.HttpMethod.POST, p_params, null, null, null );
 	}
-	public HttpURLConnection doPost ( String p_url, Map<String, String> p_params, int timeout, HttpServletRequest req ) throws IOException, OAuthSystemException, OAuthProblemException {
-		return doCall( req, p_url, OAuth.HttpMethod.POST, p_params, timeout, null, null );
+	public HttpURLConnection doPost ( String p_url, Map<String, String> p_params, int timeout, HttpSession session ) throws IOException, OAuthSystemException, OAuthProblemException {
+		return doCall( session, p_url, OAuth.HttpMethod.POST, p_params, timeout, null, null );
 	}
 
-	public HttpURLConnection doPost ( String p_url, String rawParams, int timeout, String type, HttpServletRequest req ) throws IOException, OAuthSystemException, OAuthProblemException {
-	    return doCall( req, p_url, OAuth.HttpMethod.POST, null, timeout, rawParams, type );
+	public HttpURLConnection doPost ( String p_url, String rawParams, int timeout, String type, HttpSession session ) throws IOException, OAuthSystemException, OAuthProblemException {
+	    return doCall( session, p_url, OAuth.HttpMethod.POST, null, timeout, rawParams, type );
 	}
 	
-	public HttpURLConnection doPost ( String p_url, String rawParams, String type, HttpServletRequest req ) throws IOException, OAuthSystemException, OAuthProblemException {
-	    return doCall( req, p_url, OAuth.HttpMethod.POST, null, null, rawParams, type );
+	public HttpURLConnection doPost ( String p_url, String rawParams, String type, HttpSession session ) throws IOException, OAuthSystemException, OAuthProblemException {
+	    return doCall( session, p_url, OAuth.HttpMethod.POST, null, null, rawParams, type );
 	}
 
-	public HttpURLConnection doPut ( String p_url, Map<String, String> p_params, HttpServletRequest req ) throws IOException, OAuthSystemException, OAuthProblemException {
-		return doCall( req, p_url, OAuth.HttpMethod.PUT, p_params, null, null, null );
+	public HttpURLConnection doPut ( String p_url, Map<String, String> p_params, HttpSession session ) throws IOException, OAuthSystemException, OAuthProblemException {
+		return doCall( session, p_url, OAuth.HttpMethod.PUT, p_params, null, null, null );
 	}
 
-	public HttpURLConnection doPut ( String p_url, Map<String, String> p_params, int timeout, HttpServletRequest req ) throws IOException, OAuthSystemException, OAuthProblemException {
-		return doCall( req, p_url, OAuth.HttpMethod.PUT, p_params, timeout, null, null );
+	public HttpURLConnection doPut ( String p_url, Map<String, String> p_params, int timeout, HttpSession session ) throws IOException, OAuthSystemException, OAuthProblemException {
+		return doCall( session, p_url, OAuth.HttpMethod.PUT, p_params, timeout, null, null );
 	}
 	
-	public HttpURLConnection doPatch ( String p_url, Map<String, String> p_params, HttpServletRequest req ) throws IOException, OAuthSystemException, OAuthProblemException {
-	    return doCall( req, p_url, HTTP_PATCH, p_params, null, null, null );
+	public HttpURLConnection doPatch ( String p_url, Map<String, String> p_params, HttpSession session ) throws IOException, OAuthSystemException, OAuthProblemException {
+	    return doCall( session, p_url, HTTP_PATCH, p_params, null, null, null );
 	}
 	
-	public HttpURLConnection doPatch ( String p_url, Map<String, String> p_params, int timeout, HttpServletRequest req ) throws IOException, OAuthSystemException, OAuthProblemException {
-	    return doCall( req, p_url, HTTP_PATCH, p_params, timeout, null, null );
+	public HttpURLConnection doPatch ( String p_url, Map<String, String> p_params, int timeout, HttpSession session ) throws IOException, OAuthSystemException, OAuthProblemException {
+	    return doCall( session, p_url, HTTP_PATCH, p_params, timeout, null, null );
 	}
 	
-	public HttpURLConnection doPatch ( String p_url, String rawParams, int timeout, String type, HttpServletRequest req ) throws IOException, OAuthSystemException, OAuthProblemException {
-        return doCall( req, p_url, HTTP_PATCH, null, timeout, rawParams, type );
+	public HttpURLConnection doPatch ( String p_url, String rawParams, int timeout, String type, HttpSession session ) throws IOException, OAuthSystemException, OAuthProblemException {
+        return doCall( session, p_url, HTTP_PATCH, null, timeout, rawParams, type );
     }
 	
-	public HttpURLConnection doPatch ( String p_url, String rawParams, String type, HttpServletRequest req ) throws IOException, OAuthSystemException, OAuthProblemException {
-        return doCall( req, p_url, HTTP_PATCH, null, null, rawParams, type );
+	public HttpURLConnection doPatch ( String p_url, String rawParams, String type, HttpSession session ) throws IOException, OAuthSystemException, OAuthProblemException {
+        return doCall( session, p_url, HTTP_PATCH, null, null, rawParams, type );
     }
 
-	public HttpURLConnection doDelete ( String p_url, HttpServletRequest req ) throws IOException, OAuthSystemException, OAuthProblemException {
-		return doCall( req, p_url, OAuth.HttpMethod.DELETE, null, null, null, null );
+	public HttpURLConnection doDelete ( String p_url, HttpSession session ) throws IOException, OAuthSystemException, OAuthProblemException {
+		return doCall( session, p_url, OAuth.HttpMethod.DELETE, null, null, null, null );
 	}
-	public HttpURLConnection doDelete ( String p_url, int timeout, HttpServletRequest req ) throws IOException, OAuthSystemException, OAuthProblemException {
-		return doCall( req, p_url, OAuth.HttpMethod.DELETE, null, timeout, null, null );
+	public HttpURLConnection doDelete ( String p_url, int timeout, HttpSession session ) throws IOException, OAuthSystemException, OAuthProblemException {
+		return doCall( session, p_url, OAuth.HttpMethod.DELETE, null, timeout, null, null );
+	}
+	
+	public HttpURLConnection doGet ( String p_url, HttpServletRequest p_request ) throws IOException, OAuthSystemException, OAuthProblemException {
+		return doCall( p_request.getSession() , p_url, OAuth.HttpMethod.GET, null, null, null, null );
+	}
+	
+	public HttpURLConnection doGet ( String p_url, int timeout, HttpServletRequest p_request ) throws IOException, OAuthSystemException, OAuthProblemException {
+		return doCall( p_request.getSession(), p_url, OAuth.HttpMethod.GET, null, timeout, null, null );
+	}
+	
+	public HttpURLConnection doPost ( String p_url, Map<String, String> p_params, HttpServletRequest p_request ) throws IOException, OAuthSystemException, OAuthProblemException {
+		return doCall( p_request.getSession(), p_url, OAuth.HttpMethod.POST, p_params, null, null, null );
+	}
+	public HttpURLConnection doPost ( String p_url, Map<String, String> p_params, int timeout, HttpServletRequest p_request ) throws IOException, OAuthSystemException, OAuthProblemException {
+		return doCall( p_request.getSession(), p_url, OAuth.HttpMethod.POST, p_params, timeout, null, null );
+	}
+	
+	public HttpURLConnection doPost ( String p_url, String rawParams, int timeout, String type, HttpServletRequest p_request ) throws IOException, OAuthSystemException, OAuthProblemException {
+		return doCall( p_request.getSession(), p_url, OAuth.HttpMethod.POST, null, timeout, rawParams, type );
+	}
+	
+	public HttpURLConnection doPost ( String p_url, String rawParams, String type, HttpServletRequest p_request ) throws IOException, OAuthSystemException, OAuthProblemException {
+		return doCall( p_request.getSession(), p_url, OAuth.HttpMethod.POST, null, null, rawParams, type );
+	}
+	
+	public HttpURLConnection doPut ( String p_url, Map<String, String> p_params, HttpServletRequest p_request ) throws IOException, OAuthSystemException, OAuthProblemException {
+		return doCall( p_request.getSession(), p_url, OAuth.HttpMethod.PUT, p_params, null, null, null );
+	}
+	
+	public HttpURLConnection doPut ( String p_url, Map<String, String> p_params, int timeout, HttpServletRequest p_request ) throws IOException, OAuthSystemException, OAuthProblemException {
+		return doCall( p_request.getSession(), p_url, OAuth.HttpMethod.PUT, p_params, timeout, null, null );
+	}
+	
+	public HttpURLConnection doPatch ( String p_url, Map<String, String> p_params, HttpServletRequest p_request ) throws IOException, OAuthSystemException, OAuthProblemException {
+		return doCall( p_request.getSession(), p_url, HTTP_PATCH, p_params, null, null, null );
+	}
+	
+	public HttpURLConnection doPatch ( String p_url, Map<String, String> p_params, int timeout, HttpServletRequest p_request ) throws IOException, OAuthSystemException, OAuthProblemException {
+		return doCall( p_request.getSession(), p_url, HTTP_PATCH, p_params, timeout, null, null );
+	}
+	
+	public HttpURLConnection doPatch ( String p_url, String rawParams, int timeout, String type, HttpServletRequest p_request ) throws IOException, OAuthSystemException, OAuthProblemException {
+		return doCall( p_request.getSession(), p_url, HTTP_PATCH, null, timeout, rawParams, type );
+	}
+	
+	public HttpURLConnection doPatch ( String p_url, String rawParams, String type, HttpServletRequest p_request ) throws IOException, OAuthSystemException, OAuthProblemException {
+		return doCall( p_request.getSession(), p_url, HTTP_PATCH, null, null, rawParams, type );
+	}
+	
+	public HttpURLConnection doDelete ( String p_url, HttpServletRequest p_request ) throws IOException, OAuthSystemException, OAuthProblemException {
+		return doCall( p_request.getSession(), p_url, OAuth.HttpMethod.DELETE, null, null, null, null );
+	}
+	public HttpURLConnection doDelete ( String p_url, int timeout, HttpServletRequest p_request ) throws IOException, OAuthSystemException, OAuthProblemException {
+		return doCall( p_request.getSession(), p_url, OAuth.HttpMethod.DELETE, null, timeout, null, null );
 	}
 
-	private HttpURLConnection doCall ( HttpServletRequest req, String url, String method, Map<String, String> params, Integer timeout, String rawParams, String type ) throws IOException, OAuthSystemException, OAuthProblemException {
+	private HttpURLConnection doCall ( HttpSession session, String url, String method, Map<String, String> params, Integer timeout, String rawParams, String type ) throws IOException, OAuthSystemException, OAuthProblemException {
 
-	    Date expiresIn = getExpiresIn(req);
-	    String accessToken = getAccessToken(req);
+	    Date expiresIn = getExpiresIn(session);
+	    String accessToken = getAccessToken(session);
 	    
 		// Check if access token is null or has been expired
 		if ( accessToken == null || ( expiresIn != null && new Date().getTime() >= expiresIn.getTime() )) {
@@ -225,15 +280,15 @@ public class IgzOAuthClient {
 			accessToken = null;
 			
 			if( GrantType.CLIENT_CREDENTIALS.toString().equals( getGrantType() )) {
-				getNewAccesToken(req);
+				getNewAccesToken(session);
 				
-				return doCall( req, url, method, params, timeout, rawParams, type );
+				return doCall( session, url, method, params, timeout, rawParams, type );
 			} else if(  GrantType.AUTHORIZATION_CODE.toString().equals( getGrantType() ) ) {
 				 throw OAuthProblemException.error(OAuthError.TokenResponse.UNAUTHORIZED_CLIENT).description( OAuthError.TokenResponse.UNAUTHORIZED_CLIENT );
 			} else {
-				getNewAccesToken(req);
+				getNewAccesToken(session);
 				
-				return doCall( req, url, method, params, timeout, rawParams, type );
+				return doCall( session, url, method, params, timeout, rawParams, type );
 			}
 
 		} else {
@@ -272,17 +327,17 @@ public class IgzOAuthClient {
 			if ( conn.getResponseCode() == HttpServletResponse.SC_UNAUTHORIZED ) {
 				logger.info("UNAUTHORIZED CLIENT");
 
-				req.getSession().setAttribute(OAuth.OAUTH_BEARER_TOKEN, null);
-	            req.getSession().setAttribute(OAuth.OAUTH_EXPIRES_IN, null);
-				req.getSession().setAttribute(OAuth.OAUTH_REFRESH_TOKEN, null);
+				session.setAttribute(OAuth.OAUTH_BEARER_TOKEN, null);
+	            session.setAttribute(OAuth.OAUTH_EXPIRES_IN, null);
+				session.setAttribute(OAuth.OAUTH_REFRESH_TOKEN, null);
 	            
 	            if ( GrantType.CLIENT_CREDENTIALS.toString().equals( getGrantType() ) ) {
-                    getNewAccesToken(req);
+                    getNewAccesToken(session);
                 } else if(  GrantType.AUTHORIZATION_CODE.toString().equals( getGrantType() ) ) {
                     throw OAuthProblemException.error(OAuthError.TokenResponse.UNAUTHORIZED_CLIENT).description( OAuthError.TokenResponse.UNAUTHORIZED_CLIENT );
                 }
 	            
-	            return doCall( req, url, method, params, timeout, rawParams, type );
+	            return doCall( session, url, method, params, timeout, rawParams, type );
 
 			} else {
 				logger.info("RESPONSE OK ");
@@ -293,9 +348,9 @@ public class IgzOAuthClient {
 		}
 	}
 
-	private synchronized void getNewAccesToken(HttpServletRequest req) throws OAuthSystemException, OAuthProblemException {
+	private synchronized void getNewAccesToken(HttpSession session) throws OAuthSystemException, OAuthProblemException {
 	    
-	    String accessToken = getAccessToken(req);
+	    String accessToken = getAccessToken(session);
 	    String refreshToken;
 	    
 	    // Due to synchronized method, we must check if an call has assigned access token value before
@@ -336,21 +391,21 @@ public class IgzOAuthClient {
 			
 			expiresIn.setTime( expiresIn.getTime() + ( responseExpiredIn * 1000) );
 			
-			req.getSession().setAttribute(OAuth.OAUTH_BEARER_TOKEN, accessToken);
-			req.getSession().setAttribute(OAuth.OAUTH_EXPIRES_IN, expiresIn);
-			req.getSession().setAttribute(OAuth.OAUTH_REFRESH_TOKEN, refreshToken);
+			session.setAttribute(OAuth.OAUTH_BEARER_TOKEN, accessToken);
+			session.setAttribute(OAuth.OAUTH_EXPIRES_IN, expiresIn);
+			session.setAttribute(OAuth.OAUTH_REFRESH_TOKEN, refreshToken);
 
 			logger.info("NEW TOKEN[" + accessToken + "] EXPIRES IN[" + expiresIn + "]");
 			
 		}
 	}
 
-	public void refreshToken( HttpServletRequest req, String refreshToken ) throws OAuthProblemException, OAuthSystemException, IOException {
+	public void refreshToken( HttpServletRequest p_request, String refreshToken ) throws OAuthProblemException, OAuthSystemException, IOException {
 	    
-		revokeToken(req);
+		revokeToken(p_request.getSession());
 		
-		String accessToken = getAccessToken(req);
-	    Date expiresIn = getExpiresIn(req);
+		String accessToken = getAccessToken(p_request.getSession());
+	    Date expiresIn = getExpiresIn(p_request.getSession());
 	    
         String url = tokenLocation;        
         String query = "?grant_type=refresh_token&client_id="+applicationId+"&client_secret="+applicationSecret+"&refresh_token="+refreshToken;
@@ -400,9 +455,9 @@ public class IgzOAuthClient {
 	
 				expiresIn.setTime( expiresIn.getTime() + ( responseExpiredIn * 1000) );				
 				
-				req.getSession().setAttribute(OAuth.OAUTH_BEARER_TOKEN, accessToken);
-				req.getSession().setAttribute(OAuth.OAUTH_EXPIRES_IN, expiresIn);
-				req.getSession().setAttribute(OAuth.OAUTH_REFRESH_TOKEN, refreshToken);
+				p_request.getSession().setAttribute(OAuth.OAUTH_BEARER_TOKEN, accessToken);
+				p_request.getSession().setAttribute(OAuth.OAUTH_EXPIRES_IN, expiresIn);
+				p_request.getSession().setAttribute(OAuth.OAUTH_REFRESH_TOKEN, refreshToken);
 	
 				logger.info("NEW TOKEN[" + accessToken + "] EXPIRES IN[" + expiresIn + "]"); 	
 				
@@ -411,8 +466,8 @@ public class IgzOAuthClient {
 	    
 	}
 	
-	private void revokeToken( HttpServletRequest req ) throws IOException {
-		String accessToken = getAccessToken(req);
+	private void revokeToken( HttpSession session ) throws IOException {
+		String accessToken = getAccessToken(session);
         String url = revokeUrl;
         
             HttpURLConnection conn = (HttpURLConnection) new URL(url).openConnection();
