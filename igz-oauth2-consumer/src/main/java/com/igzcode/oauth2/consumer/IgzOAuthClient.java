@@ -401,11 +401,15 @@ public class IgzOAuthClient {
 	}
 
 	public void refreshToken( HttpServletRequest p_request, String refreshToken ) throws OAuthProblemException, OAuthSystemException, IOException {
+		refreshToken( p_request.getSession(), refreshToken );
+	}
+	
+	public void refreshToken( HttpSession p_session, String refreshToken ) throws OAuthProblemException, OAuthSystemException, IOException {
 	    
-		revokeToken(p_request.getSession());
+		revokeToken(p_session);
 		
-		String accessToken = getAccessToken(p_request.getSession());
-	    Date expiresIn = getExpiresIn(p_request.getSession());
+		String accessToken = getAccessToken(p_session);
+	    Date expiresIn = getExpiresIn(p_session);
 	    
         String url = tokenLocation;        
         String query = "?grant_type=refresh_token&client_id="+applicationId+"&client_secret="+applicationSecret+"&refresh_token="+refreshToken;
@@ -455,9 +459,9 @@ public class IgzOAuthClient {
 	
 				expiresIn.setTime( expiresIn.getTime() + ( responseExpiredIn * 1000) );				
 				
-				p_request.getSession().setAttribute(OAuth.OAUTH_BEARER_TOKEN, accessToken);
-				p_request.getSession().setAttribute(OAuth.OAUTH_EXPIRES_IN, expiresIn);
-				p_request.getSession().setAttribute(OAuth.OAUTH_REFRESH_TOKEN, refreshToken);
+				p_session.setAttribute(OAuth.OAUTH_BEARER_TOKEN, accessToken);
+				p_session.setAttribute(OAuth.OAUTH_EXPIRES_IN, expiresIn);
+				p_session.setAttribute(OAuth.OAUTH_REFRESH_TOKEN, refreshToken);
 	
 				logger.info("NEW TOKEN[" + accessToken + "] EXPIRES IN[" + expiresIn + "]"); 	
 				
