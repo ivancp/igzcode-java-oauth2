@@ -31,6 +31,7 @@ import org.apache.amber.oauth2.common.exception.OAuthSystemException;
 import org.apache.amber.oauth2.common.message.types.GrantType;
 
 import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.igzcode.oauth2.consumer.util.PropertiesUtil;
 
@@ -456,9 +457,11 @@ public class IgzOAuthClient {
 				if( jsonElement.getAsJsonObject() != null && jsonElement.getAsJsonObject().get("refresh_token") != null && jsonElement.getAsJsonObject().get("refresh_token").getAsString() != null){	
 					refreshToken = jsonElement.getAsJsonObject().get("refresh_token").getAsString();
 				}
-	
-				expiresIn.setTime( expiresIn.getTime() + ( responseExpiredIn * 1000) );				
-				
+				if( responseExpiredIn != null ){
+					expiresIn.setTime( expiresIn.getTime() + ( responseExpiredIn * 1000) );				
+				} else {
+					expiresIn = null;
+				}
 				p_session.setAttribute(OAuth.OAUTH_BEARER_TOKEN, accessToken);
 				p_session.setAttribute(OAuth.OAUTH_EXPIRES_IN, expiresIn);
 				p_session.setAttribute(OAuth.OAUTH_REFRESH_TOKEN, refreshToken);
