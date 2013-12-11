@@ -411,7 +411,7 @@ public class IgzOAuthClient {
 		
 		String accessToken = getAccessToken(p_session);
 	    Date expiresIn = getExpiresIn(p_session);
-	    
+	    logger.severe("OLD TOKEN[" + accessToken + "]"); 	
         String url = tokenLocation;        
         String query = "?grant_type=refresh_token&client_id="+applicationId+"&client_secret="+applicationSecret+"&refresh_token="+refreshToken;
         url += query;
@@ -434,6 +434,8 @@ public class IgzOAuthClient {
 				line = buff.readLine();
 			}             
 			resultado = text.toString();
+			
+			logger.severe("The output of refresh token method is: "+resultado);
 			
 			JsonParser parser = new JsonParser();
 			JsonElement jsonElement;
@@ -466,7 +468,7 @@ public class IgzOAuthClient {
 				p_session.setAttribute(OAuth.OAUTH_EXPIRES_IN, expiresIn);
 				p_session.setAttribute(OAuth.OAUTH_REFRESH_TOKEN, refreshToken);
 	
-				logger.info("NEW TOKEN[" + accessToken + "] EXPIRES IN[" + expiresIn + "]"); 	
+				logger.severe("NEW TOKEN[" + accessToken + "] EXPIRES IN[" + expiresIn + "]"); 	
 				
 				
 			} 
@@ -495,7 +497,7 @@ public class IgzOAuthClient {
 			output.close();
 			
 			Integer responseCode = conn.getResponseCode();
-			System.out.println(responseCode);
+			logger.severe("The response code in the revoke token method is: "+responseCode);
 		
 	}
 
