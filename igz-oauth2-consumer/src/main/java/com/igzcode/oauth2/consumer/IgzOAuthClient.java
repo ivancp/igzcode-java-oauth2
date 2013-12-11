@@ -31,7 +31,6 @@ import org.apache.amber.oauth2.common.exception.OAuthSystemException;
 import org.apache.amber.oauth2.common.message.types.GrantType;
 
 import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.igzcode.oauth2.consumer.util.PropertiesUtil;
 
@@ -411,7 +410,7 @@ public class IgzOAuthClient {
 		
 		String accessToken = getAccessToken(p_session);
 	    Date expiresIn = getExpiresIn(p_session);
-	    logger.severe("OLD TOKEN[" + accessToken + "]"); 	
+	    logger.info("OLD TOKEN[" + accessToken + "]"); 	
         String url = tokenLocation;        
         String query = "?grant_type=refresh_token&client_id="+applicationId+"&client_secret="+applicationSecret+"&refresh_token="+refreshToken;
         url += query;
@@ -423,7 +422,6 @@ public class IgzOAuthClient {
 			conn.setDoOutput(true);
 		
 			conn.setConnectTimeout(connectionTimeout);
-			Integer responseCode = conn.getResponseCode();
 	        String resultado;
 	        StringBuffer text = new StringBuffer();
 			InputStreamReader in = new InputStreamReader((InputStream) conn.getContent(), "UTF8");
@@ -435,7 +433,7 @@ public class IgzOAuthClient {
 			}             
 			resultado = text.toString();
 			
-			logger.severe("The output of refresh token method is: "+resultado);
+			logger.info("The output of refresh token method is: "+resultado);
 			
 			JsonParser parser = new JsonParser();
 			JsonElement jsonElement;
@@ -468,37 +466,38 @@ public class IgzOAuthClient {
 				p_session.setAttribute(OAuth.OAUTH_EXPIRES_IN, expiresIn);
 				p_session.setAttribute(OAuth.OAUTH_REFRESH_TOKEN, refreshToken);
 	
-				logger.severe("NEW TOKEN[" + accessToken + "] EXPIRES IN[" + expiresIn + "]"); 	
-				
-				
-			} 
-	    
+				logger.info("NEW TOKEN[" + accessToken + "] EXPIRES IN[" + expiresIn + "]"); 					
+			}     
 	}
+	
+	public void revokeToken( String token ) throws IOException {		
+        String url = revokeUrl;
+        
+        HttpURLConnection conn = (HttpURLConnection) new URL(url).openConnection();
+        
+
+		conn.setRequestMethod( OAuth.HttpMethod.POST );
+		conn.setDoOutput(true);
+		conn.setRequestProperty(OAuth.HeaderType.CONTENT_TYPE, OAuth.ContentType.URL_ENCODED);
+	
+		conn.setConnectTimeout(connectionTimeout);
+		
+		HashMap<String, String> params = new HashMap<String, String>(); 
+		params.put("token", token);
+		
+		OutputStream output = conn.getOutputStream();
+		output.write( getPayload(params) );
+		output.flush();
+		output.close();
+		
+		Integer responseCode = conn.getResponseCode();
+		logger.info("The response code in the revoke token method is: "+responseCode);		
+	}
+
 	
 	private void revokeToken( HttpSession session ) throws IOException {
 		String accessToken = getAccessToken(session);
-        String url = revokeUrl;
-        
-            HttpURLConnection conn = (HttpURLConnection) new URL(url).openConnection();
-	        
-	
-			conn.setRequestMethod( OAuth.HttpMethod.POST );
-			conn.setDoOutput(true);
-			conn.setRequestProperty(OAuth.HeaderType.CONTENT_TYPE, OAuth.ContentType.URL_ENCODED);
-		
-			conn.setConnectTimeout(connectionTimeout);
-			
-			HashMap<String, String> params = new HashMap<String, String>(); 
-			params.put("token", accessToken);
-			
-			OutputStream output = conn.getOutputStream();
-			output.write( getPayload(params) );
-			output.flush();
-			output.close();
-			
-			Integer responseCode = conn.getResponseCode();
-			logger.severe("The response code in the revoke token method is: "+responseCode);
-		
+		revokeToken(accessToken);
 	}
 
 	private byte[] getPayload (Map<String, String> params) throws UnsupportedEncodingException {
