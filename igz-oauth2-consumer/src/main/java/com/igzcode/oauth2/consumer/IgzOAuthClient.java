@@ -439,8 +439,12 @@ public class IgzOAuthClient {
 			JsonElement jsonElement;
 			
 			if(parser.parse(resultado).isJsonObject()){
+				
 				//return json object
 				jsonElement = parser.parse(resultado).getAsJsonObject();
+				//Check if Refresh Token has expired.
+				if(jsonElement.getAsJsonObject() != null && jsonElement.getAsJsonObject().get("error") != null && "invalid_grant".equals(jsonElement.getAsJsonObject().get("error").getAsString())) throw OAuthProblemException.error("The Refresh Token has expired.");
+				
 				if( jsonElement.getAsJsonObject() != null && jsonElement.getAsJsonObject().get("access_token") != null && jsonElement.getAsJsonObject().get("access_token").getAsString() != null){
 					accessToken = jsonElement.getAsJsonObject().get("access_token").getAsString();
 				}
