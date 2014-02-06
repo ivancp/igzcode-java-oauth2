@@ -405,23 +405,39 @@ public class IgzOAuthClient {
 	}
 	
 	public void refreshToken( HttpSession p_session, String refreshToken ) throws OAuthProblemException, OAuthSystemException, IOException {
+		refreshToken( getAccessToken(p_session), refreshToken, getExpiresIn(p_session), p_session );
+	}
+	
+	public void refreshToken( String accessToken, String refreshToken, Date expiresIn, HttpSession p_session ) throws OAuthProblemException, OAuthSystemException, IOException {
 	    
-		revokeToken(p_session);
+		if(!revokeToken(accessToken)) throw OAuthProblemException.error("The Access Token already has expired.");
 		
-		String accessToken = getAccessToken(p_session);
-	    Date expiresIn = getExpiresIn(p_session);
+//		String accessToken = getAccessToken(p_session);
+//	    Date expiresIn = getExpiresIn(p_session);
 	    logger.info("OLD TOKEN[" + accessToken + "]"); 	
         String url = tokenLocation;        
-        String query = "?grant_type=refresh_token&client_id="+applicationId+"&client_secret="+applicationSecret+"&refresh_token="+refreshToken;
-        url += query;
+//        String query = "?grant_type=refresh_token&client_id="+applicationId+"&client_secret="+applicationSecret+"&refresh_token="+refreshToken;
+//        url += query;
         
             HttpURLConnection conn = (HttpURLConnection) new URL(url).openConnection();
 	        
 	
-			conn.setRequestMethod( OAuth.HttpMethod.GET );
+			conn.setRequestMethod( OAuth.HttpMethod.POST );
 			conn.setDoOutput(true);
 		
 			conn.setConnectTimeout(connectionTimeout);
+			
+			HashMap<String, String> params = new HashMap<String, String>(); 
+			params.put("grant_type", "refresh_token");
+			params.put("client_id", applicationId);
+			params.put("client_secret", applicationSecret);
+			params.put("refresh_token", refreshToken);
+			
+			OutputStream output = conn.getOutputStream();
+			output.write( getPayload(params) );
+			output.flush();
+			output.close();
+			
 	        String resultado;
 	        StringBuffer text = new StringBuffer();
 			InputStreamReader in = new InputStreamReader((InputStream) conn.getContent(), "UTF8");
@@ -474,7 +490,7 @@ public class IgzOAuthClient {
 			}     
 	}
 	
-	public void revokeToken( String token ) throws IOException {		
+	public Boolean revokeToken( String token ) throws IOException {		
         String url = revokeUrl;
         
         HttpURLConnection conn = (HttpURLConnection) new URL(url).openConnection();
@@ -495,13 +511,14 @@ public class IgzOAuthClient {
 		output.close();
 		
 		Integer responseCode = conn.getResponseCode();
-		logger.info("The response code in the revoke token method is: "+responseCode);		
+		logger.info("The response code in the revoke token method is: "+responseCode);
+		return(conn.getResponseCode() == 200 );
 	}
 
 	
-	private void revokeToken( HttpSession session ) throws IOException {
+	private Boolean revokeToken( HttpSession session ) throws IOException {
 		String accessToken = getAccessToken(session);
-		revokeToken(accessToken);
+		return revokeToken(accessToken);
 	}
 
 	private byte[] getPayload (Map<String, String> params) throws UnsupportedEncodingException {
