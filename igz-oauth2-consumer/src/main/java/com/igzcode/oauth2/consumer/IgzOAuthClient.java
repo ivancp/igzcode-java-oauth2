@@ -409,8 +409,10 @@ public class IgzOAuthClient {
 	}
 	
 	public void refreshToken( String accessToken, String refreshToken, Date expiresIn, HttpSession p_session ) throws OAuthProblemException, OAuthSystemException, IOException {
-	    
-		if(!revokeToken(accessToken)) throw OAuthProblemException.error("The Access Token already has expired.");
+
+		
+		Boolean revokeResponse = revokeToken(accessToken);
+		if(!revokeResponse && getAccessToken(p_session) != null && !"".equals(getAccessToken(p_session)) && !getAccessToken(p_session).equals(accessToken) ) throw OAuthProblemException.error("The Access Token already has expired.");
 		
 //		String accessToken = getAccessToken(p_session);
 //	    Date expiresIn = getExpiresIn(p_session);
