@@ -2,6 +2,7 @@ package com.igzcode.oauth2.consumer.servlet;
 
 import java.io.IOException;
 import java.util.Date;
+import java.util.logging.Logger;
 
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
@@ -26,6 +27,8 @@ public class TokenServlet extends HttpServlet {
     private static final long serialVersionUID = 252800141251573580L;
     
     private IgzOAuthClient igzOAuthClient;
+    
+    protected static final Logger logger = Logger.getLogger(TokenServlet.class.getName());
 
     public void init(ServletConfig config) throws ServletException {
         
@@ -51,6 +54,8 @@ public class TokenServlet extends HttpServlet {
 
             OAuthClient oAuthClient = new OAuthClient(new IgzURLConnectionClient(igzOAuthClient.getConnectionTimeout()));
             OAuthAccessTokenResponse oAuthResponse = oAuthClient.accessToken(oautReq);
+            
+            String instanceURL = oAuthResponse.getParam("instance_url");
 
             String accessToken = oAuthResponse.getAccessToken();
             
@@ -71,6 +76,7 @@ public class TokenServlet extends HttpServlet {
             request.getSession().setAttribute(OAuth.OAUTH_BEARER_TOKEN, accessToken);
             request.getSession().setAttribute(OAuth.OAUTH_EXPIRES_IN, expiresIn);
             request.getSession().setAttribute(OAuth.OAUTH_REFRESH_TOKEN, refreshToken);
+            request.getSession().setAttribute(IgzOAuthClient.INSTANCE_URL, instanceURL);
 
             response.sendRedirect(igzOAuthClient.getLoginEndPoint());
 

@@ -50,6 +50,7 @@ public class IgzOAuthClient {
 	private static final String LOGIN_ENDPOINT = "oauth2.loginServletPath";
 	private static final String DEFAULT_EXPIRES_IN = "oauth2.defaultexpiresin";
 	private static final String CONNECTION_TIMEOUT = "oauth2.connectionTimeout";
+	public static final String INSTANCE_URL = "instance_url";
 	
 	private static final Charset CHARSET = Charset.forName("UTF-8");
 	
@@ -440,7 +441,7 @@ public class IgzOAuthClient {
 			output.flush();
 			output.close();
 			
-	        String resultado;
+	        String body;
 	        StringBuffer text = new StringBuffer();
 			InputStreamReader in = new InputStreamReader((InputStream) conn.getContent(), "UTF8");
 			BufferedReader buff = new BufferedReader(in);
@@ -449,17 +450,17 @@ public class IgzOAuthClient {
 				text.append(line + "\n");
 				line = buff.readLine();
 			}             
-			resultado = text.toString();
+			body = text.toString();
 			
-			logger.info("The output of refresh token method is: "+resultado);
+			logger.info("The output of refresh token method is: "+body);
 			
 			JsonParser parser = new JsonParser();
 			JsonElement jsonElement;
 			
-			if(parser.parse(resultado).isJsonObject()){
+			if(parser.parse(body).isJsonObject()){
 				
 				//return json object
-				jsonElement = parser.parse(resultado).getAsJsonObject();
+				jsonElement = parser.parse(body).getAsJsonObject();
 				//Check if Refresh Token has expired.
 				if(jsonElement.getAsJsonObject() != null && jsonElement.getAsJsonObject().get("error") != null && "invalid_grant".equals(jsonElement.getAsJsonObject().get("error").getAsString())) 
 				{
@@ -474,6 +475,7 @@ public class IgzOAuthClient {
 				if( jsonElement.getAsJsonObject() != null && jsonElement.getAsJsonObject().get("access_token") != null && jsonElement.getAsJsonObject().get("access_token").getAsString() != null){
 					accessToken = jsonElement.getAsJsonObject().get("access_token").getAsString();
 				}
+				
 				expiresIn = new Date();
 				Long responseExpiredIn;
 				if( jsonElement.getAsJsonObject() != null && jsonElement.getAsJsonObject().get("expires_in") != null && jsonElement.getAsJsonObject().get("expires_in").getAsString() != null){		
@@ -484,17 +486,26 @@ public class IgzOAuthClient {
 				} else {
 					responseExpiredIn = defaultExpiresIn;
 				}
+				
 				if( jsonElement.getAsJsonObject() != null && jsonElement.getAsJsonObject().get("refresh_token") != null && jsonElement.getAsJsonObject().get("refresh_token").getAsString() != null){	
 					refreshToken = jsonElement.getAsJsonObject().get("refresh_token").getAsString();
 				}
+				
 				if( responseExpiredIn != null ){
 					expiresIn.setTime( expiresIn.getTime() + ( responseExpiredIn * 1000) );				
 				} else {
 					expiresIn = null;
 				}
+				
+				String instanceURL = null;
+				if( jsonElement.getAsJsonObject() != null && jsonElement.getAsJsonObject().get("instance_url") != null && jsonElement.getAsJsonObject().get("instance_url").getAsString() != null){	
+					instanceURL = jsonElement.getAsJsonObject().get("instance_url").getAsString();
+				}				
+				
 				p_session.setAttribute(OAuth.OAUTH_BEARER_TOKEN, accessToken);
 				p_session.setAttribute(OAuth.OAUTH_EXPIRES_IN, expiresIn);
 				p_session.setAttribute(OAuth.OAUTH_REFRESH_TOKEN, refreshToken);
+				p_session.setAttribute(INSTANCE_URL, instanceURL);
 	
 				logger.info("NEW TOKEN[" + accessToken + "] EXPIRES IN[" + expiresIn + "]"); 					
 			}     
